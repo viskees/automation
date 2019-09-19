@@ -7,6 +7,6 @@ from . import views
 app_name = 'certificates'
 
 urlpatterns = [
-    # ex: /file_upload/
+    # ex: /certificates/
     path('', views.certificates, name='certificates'),
 ]
