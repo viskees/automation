@@ -102,15 +102,17 @@ def database(request):
                                                   name=profile_cssl_dict['name'])
             new_profile_cssl.append(profile_cssl_dict['name'])
 
+
         # virtual server tabel
-        # bigip_name = BigIPNodes.objects.get(bigip_ip=bigip_ip)
-        # profilesslclient_id = profilesslclient.objects.get(name__exact=profiles_dict['name']).id
-        # full_name = virtual_servers_dict['fullPath']
-        # partition = virtual_servers_dict['partition']
-        # name = virtual_servers_dict['name']
-        # destination = virtual_servers_dict['destination']
+        new_virtual_server = []
 
         for virtual_servers_dict in virtual_servers_list_dict:
+            # bigip_name = BigIPNodes.objects.get(bigip_ip=bigip_ip)
+            # profilesslclient_id = profilesslclient.objects.get(name__exact=profiles_dict['name']).id
+            # full_name = virtual_servers_dict['fullPath']
+            # partition = virtual_servers_dict['partition']
+            # name = virtual_servers_dict['name']
+            # destination = virtual_servers_dict['destination']
 
             # virtual server profile reference dictionary aanmaken
             profile_reference = virtual_servers_dict.get('profilesReference')
@@ -140,18 +142,17 @@ def database(request):
                                                            profilesslclient_id = ProfileSSLClient.objects.get(name__exact=profiles_dict['name'],
                                                                                                               bigip_name_id__exact=bigip_node_id).id,
                                                            )
+                        new_virtual_server.append(virtual_servers_dict['name'])
                     else:
                         continue
 
 
 
 
-        #new_profile_cssl.append(profile_cssl_dict['name'])
-
-
         # toegevoegde entries meegeven om weer te geven op de database.html pagina
         database_updates['certificates'] = new_certs
         database_updates['profile_cssl'] = new_profile_cssl
+        database_updates['virtual_servers'] = new_virtual_server
 
         # database tabel bijwerken zodat het duidelijk is van welke datum de huidige configuratie is
         #bigip_name_id = BigIPNodes.objects.get(full_name__exact=).id

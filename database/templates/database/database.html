@@ -53,6 +53,14 @@
 
     {% endfor %}
 
+    <p>Virtual server tabel met deze virtual servers:<p>
+
+    {% for virtual_server in database_updates.virtual_servers %}
+
+        <li>{{ virtual_server }}</li>
+
+    {% endfor %}
+
 {% endif %}
 
 {% endblock %}
