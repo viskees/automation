@@ -2,6 +2,39 @@
 
 {% block content_name %}
 
-<h2>Certifcates Page</h2>
+<h2>Certificates Page</h2>
 
+    <form action="{% url 'certificates:certificates' %}" method="POST">
+
+        {% csrf_token %}
+        <input type="submit" name="query_db" value="List Certificates in order of expiration">
+
+    </form>
+
+{% if query_data %}
+
+    <p><table>
+        <tr>
+            <th>Virtual Server</th>
+            <th>IP</th>
+            <th>Cluster</th>
+            <th>Client SSL Profile</th>
+            <th>Cert</th>
+            <th>Expiration</th>
+        </tr>
+
+        {% for virtual_server in query_data %}
+            <tr>
+                <td>{{ virtual_server.name }}</td>
+                <td>{{ virtual_server.destination }}</td>
+                <td>{{ virtual_server.bigip_name.bigip_name}}</td>
+                <td>{{ virtual_server.profilesslclient.name }}</td>
+                <td>{{ virtual_server.profilesslclient.certificate.name }}</td>
+                <td>{{ virtual_server.profilesslclient.certificate.expiration }}</td>
+            </tr>
+        {% endfor %}
+
+    </table></p>
+
+{% endif %}
 {% endblock %}

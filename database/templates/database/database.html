@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block content_name %}
+
+<h2>Database Page</h2>
+
+{% if bigip_node_list %}
+    <form action="{% url 'database:database' %}" method="POST">
+        {% csrf_token %}
+        <select name="bigip_ip">
+
+            {% for node in bigip_node_list %}
+
+                <option value="{{node.bigip_ip}}">{{node.bigip_name}}</option>
+
+            {% endfor %}
+        </select>
+        <input type="submit" name="update_db" value="Update Database from F5 node">
+        </form><p>
+
+    <p><table>
+        <tr>
+            <th>F5 node</th>
+            <th>Tables updated</th>
+        </tr>
+
+        {% for bigip_node in database %}
+            <tr>
+                <td>{{ bigip_node.bigip_name }}</td>
+                <td>{{ bigip_node.created_on }}</td>
+            </tr>
+        {% endfor %}
+
+    </table></p>
+
+{% elif database_updates %}
+
+    Deze database tabellen zijn bijgewerkt:<p>
+
+    <p>Certificates tabel met deze certificaten:<p>
+
+    {% for certificate in database_updates.certificates %}
+
+        <li>{{ certificate }}</li>
+
+    {% endfor %}
+
+    <p>Client SSL Profile tabel met deze cssl_profiles:<p>
+
+    {% for cssl_profile in database_updates.profile_cssl %}
+
+        <li>{{ cssl_profile }}</li>
+
+    {% endfor %}
+
+    <p>Virtual server tabel met deze virtual servers:<p>
+
+    {% for virtual_server in database_updates.virtual_servers %}
+
+        <li>{{ virtual_server }}</li>
+
+    {% endfor %}
+
+{% endif %}
+
+{% endblock %}
+

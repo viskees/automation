@@ -17,10 +17,10 @@ from django.conf.urls import include, url
 from django.contrib import admin
 
 urlpatterns = [
-    url(r'^$', include('certificates.urls')),
+    url(r'^$', include('database.urls')),
+    url(r'^database/', include('database.urls')),
     url(r'^file_upload/', include('file_upload.urls')),
     url(r'^decommissioning/', include('decommissioning.urls')),
-    url(r'^dependencies/', include('dependencies.urls')),
     url(r'^certificates/', include('certificates.urls')),
     url(r'^admin/', admin.site.urls),
 ]
