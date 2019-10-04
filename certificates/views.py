@@ -18,7 +18,7 @@ def certificates(request):
 
     if 'query_db_certs' in request.POST:
         #context = {"query_data": Certificates.objects.all().order_by('expiration')}
-        context = {"query_data": VirtualServer.objects.select_related().order_by('profilesslclient__certificate__expiration')}
+        context = {"query_data": VirtualServer.objects.select_related().order_by('profilesslclient__certificate__expiration').filter(profilesslclient_id__isnull=False)}
 
     elif 'cert' in request.POST:
         colon, cert_name, bigip_id = request.POST['cert'].split(":")

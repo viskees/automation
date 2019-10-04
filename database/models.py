@@ -50,11 +50,12 @@ class ProfileSSLClient(models.Model):
 
 class VirtualServer(models.Model):
     bigip_name = models.ForeignKey(BigIPNodes, on_delete=models.CASCADE)
-    profilesslclient = models.ForeignKey(ProfileSSLClient, on_delete=models.CASCADE)
+    profilesslclient = models.ForeignKey(ProfileSSLClient, on_delete=models.CASCADE, null=True)
     full_name = models.CharField(max_length=200)
     name = models.CharField(max_length=200)
     partition = models.CharField(max_length=200)
     destination = models.CharField(max_length=200)
+    profiles = models.CharField(max_length=200)
 
     def __str__(self):
         return self.name
