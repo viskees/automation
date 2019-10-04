@@ -76,9 +76,48 @@ def database(request):
         # certificaattabel
         new_certs = []
         for cert_dict in certs_list_dict:
+
+            print(cert_dict)
+
+            #bigip_name = BigIPNodes.objects.get(bigip_ip=bigip_ip)
+            #name = cert_name form cert_dict['name'].split("/")
+            #full_name = cert_dict['name']
+            #partition = cert_partition cert_dict['name'].split("/")
+            #expiration = cert_dict['apiRawValues']['expiration']
+            #commonName = cert_dict['commonName']
+            #certificateKeySize = cert_dict['apiRawValues']['certificateKeySize']
+            #publicKeyType = cert_dict['apiRawValues']['publicKeyType']
+            #organization = cert_dict['commonName']
+            #ou = cert_dict['ou']
+            #city = cert_dict['city']
+            #country = cert_dict['country']
+            #state = cert_dict['state']
+            #subjectAlternativeName = cert_dict['subjectAlternativeName']
+
             slash, cert_partition, cert_name = cert_dict['name'].split("/")
-            BigIPNode.certificates_set.create(name=cert_name, partition=cert_partition, full_name=cert_dict['name'],
-                expiration=datetime.strptime(cert_dict['apiRawValues']['expiration'], '%b %d %H:%M:%S %Y %Z'))
+
+            #kwargs = {'name': 'Adam')
+
+            #func(kwargs['name'] if 'name' in kwargs.keys() else '')  # Expected Output: 'Adam'
+            #func(kwargs['notakey'] if 'notakey' in kwargs.keys() else '')  # Expected Output: ''
+
+            BigIPNode.certificates_set.create(bigip_name = BigIPNodes.objects.get(bigip_ip=bigip_ip),
+                                              name=cert_name,
+                                              full_name=cert_dict['name'],
+                                              partition=cert_partition,
+                                              expiration=datetime.strptime(cert_dict['apiRawValues']['expiration'],
+                                                                           '%b %d %H:%M:%S %Y %Z'),
+                                              commonName = cert_dict['commonName'],
+                                              certificateKeySize = cert_dict['apiRawValues']['certificateKeySize'],
+                                              publicKeyType = cert_dict['apiRawValues']['publicKeyType'],
+                                              organization = cert_dict['commonName'] if 'organization' in cert_dict.keys() else '',
+                                              ou = cert_dict['ou'] if 'ou' in cert_dict.keys() else '',
+                                              city = cert_dict['city'] if 'city' in cert_dict.keys() else '',
+                                              country = cert_dict['country'] if 'country' in cert_dict.keys() else '',
+                                              state = cert_dict['state'] if 'state' in cert_dict.keys() else '',
+                                              subjectAlternativeName=cert_dict['subjectAlternativeName'] if 'subjectAlternativeName' in cert_dict.keys() else ''
+                                                  )
+
             new_certs.append(cert_dict['name'])
 
         # client SSL tabel
@@ -100,6 +139,7 @@ def database(request):
                                                   full_name=profile_cssl_dict['fullPath'],
                                                   partition=profile_cssl_dict['partition'],
                                                   name=profile_cssl_dict['name'])
+
             new_profile_cssl.append(profile_cssl_dict['name'])
 
 
@@ -135,10 +175,11 @@ def database(request):
                         # SSL profiel gevonden -> tabel entry aanmaken
                         #print(profiles_dict['name'])
                         #print(ProfileSSLClient.objects.get(name__exact=profiles_dict['name']).id)
+                        slash, virtual_server_partition, virtual_server_ip = virtual_servers_dict['destination'].split("/")
                         BigIPNode.virtualserver_set.create(full_name=virtual_servers_dict['fullPath'],
                                                            name=virtual_servers_dict['name'],
                                                            partition=virtual_servers_dict['partition'],
-                                                           destination = virtual_servers_dict['destination'],
+                                                           destination = virtual_server_ip,
                                                            profilesslclient_id = ProfileSSLClient.objects.get(name__exact=profiles_dict['name'],
                                                                                                               bigip_name_id__exact=bigip_node_id).id,
                                                            )

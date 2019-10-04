@@ -7,7 +7,8 @@
     <form action="{% url 'certificates:certificates' %}" method="POST">
 
         {% csrf_token %}
-        <input type="submit" name="query_db" value="List Certificates in order of expiration">
+        <input type="submit" name="query_db_certs" value="List Certificates in order of expiration">
+        <input type="submit" name="query_db_vs" value="List all virtual servers">
 
     </form>
 
@@ -15,7 +16,9 @@
 
     <p><table>
         <tr>
+            <th>Generate CSR</th>
             <th>Virtual Server</th>
+            <th>Partition</th>
             <th>IP</th>
             <th>Cluster</th>
             <th>Client SSL Profile</th>
@@ -23,18 +26,95 @@
             <th>Expiration</th>
         </tr>
 
-        {% for virtual_server in query_data %}
-            <tr>
-                <td>{{ virtual_server.name }}</td>
-                <td>{{ virtual_server.destination }}</td>
-                <td>{{ virtual_server.bigip_name.bigip_name}}</td>
-                <td>{{ virtual_server.profilesslclient.name }}</td>
-                <td>{{ virtual_server.profilesslclient.certificate.name }}</td>
-                <td>{{ virtual_server.profilesslclient.certificate.expiration }}</td>
-            </tr>
-        {% endfor %}
+        <form action="{% url 'certificates:certificates' %}" method="post">
+            {% csrf_token %}
+            {% for virtual_server in query_data %}
+                <tr>
+                    <td>
+                        <input type="radio" name="cert" value="name:{{ virtual_server.profilesslclient.certificate.name }}, id:{{virtual_server.bigip_name_id}}">
+                    </td>
+                    <td>{{ virtual_server.name }}</td>
+                    <td>{{ virtual_server.partition }}</td>
+                    <td>{{ virtual_server.destination }}</td>
+                    <td>{{ virtual_server.bigip_name.bigip_name}}</td>
+                    <td>{{ virtual_server.profilesslclient.name }}</td>
+                    <td>{{ virtual_server.profilesslclient.certificate.name }}</td>
+                    <td>{{ virtual_server.profilesslclient.certificate.expiration }}</td>
+                </tr>
+            {% endfor %}
+
 
     </table></p>
 
+    <input type="submit" value="Generate CSR">
+    </form>
+
 {% endif %}
+
+{% if certificate_csr %}
+
+    <form action="{% url 'certificates:certificates' %}" method="post">
+
+        {% csrf_token %}
+        {% for certificate in certificate_csr %}
+        <br><b>Name:</b> {{certificate.name}} in <b>partitition:</b> {{certificate.partition}} on <b>BigIP node:</b> {{certificate.bigip_name}}, <b>expires</b> on {{certificate.expiration}}<br>
+
+            <input type="hidden" name="bigip_name" value="{{certificate.bigip_name}}"><br>
+
+            <table>
+                <tr>
+                    <td>CSR Name:</td>
+                    <td><input type="tekst" name="name" value="{{certificate.name}}"></td>
+                </tr>
+                <tr>
+                    <td>CN:</td>
+                    <td><input type="tekst" name="cn" value="{{certificate.commonName}}"></td>
+                </tr>
+                <tr>
+                    <td>O:</td>
+                    <td><input type="tekst" name="o" value="{{certificate.commonName}}"></td>
+                </tr>
+                <tr>
+                    <td>OU:</td>
+                    <td><input type="tekst" name="ou" value="{{certificate.ou}}"></td>
+                </tr>
+                <tr>
+                    <td>City:</td>
+                    <td><input type="tekst" name="city" value="{{certificate.city}}"></td>
+                </tr>
+                <tr>
+                    <td>Country:</td>
+                    <td><input type="tekst" name="country" value="{{certificate.country}}"></td>
+                </tr>
+                <tr>
+                    <td>State:</td>
+                    <td><input type="tekst" name="state" value="{{certificate.state}}"></td>
+                </tr>
+                <tr>
+                    <td>SAN:</td>
+                    <td><input type="tekst" name="san" value="{{certificate.subjectAlternativeName}}"></td>
+                </tr>
+                <tr>
+                    <td>Cert Key Size:</td>
+                    <td><input type="tekst" name="key_size" value="{{certificate.certificateKeySize}}"></td>
+                </tr>
+                <tr>
+                    <td>Cert Key Type:</td>
+                    <td><input type="tekst" name="key_type" value="{{certificate.publicKeyType}}"></td>
+                </tr>
+
+            </table>
+
+            <br><input type="submit" value="Generate CSR on {{certificate.bigip_name}} in partition {{certificate.partition}}">
+        {% endfor %}
+
+    </form>
+{% endif %}
+
+{% if status_code_key %}
+
+    <br>CSR + private key status code:{{status_code_key}}<br>
+
+{% endif %}
+
 {% endblock %}
