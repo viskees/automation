@@ -21,10 +21,19 @@ class Database(models.Model):
 
 class Certificates(models.Model):
     bigip_name = models.ForeignKey(BigIPNodes, on_delete=models.CASCADE)
-    full_name = models.CharField(max_length=200)
     partition = models.CharField(max_length=200)
     name = models.CharField(max_length=200)
+    full_name = models.CharField(max_length=200)
     expiration = models.DateTimeField()
+    commonName = models.CharField(max_length=200)
+    certificateKeySize = models.CharField(max_length=200)
+    publicKeyType = models.CharField(max_length=200)
+    organization = models.CharField(max_length=200)
+    ou = models.CharField(max_length=200)
+    city = models.CharField(max_length=200)
+    country = models.CharField(max_length=200)
+    state = models.CharField(max_length=200)
+    subjectAlternativeName = models.CharField(max_length=2048)
 
     def __str__(self):
         return self.name
