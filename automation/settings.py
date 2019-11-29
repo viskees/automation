@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'certificates',
     'decommissioning',
     'file_upload',
+    'django_crontab',
 ]
 
 MIDDLEWARE = [
