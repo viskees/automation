@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'certificates',
     'decommissioning',
     'file_upload',
-    'django_crontab',
+    "django_cron",
 ]
 
 MIDDLEWARE = [
@@ -126,3 +126,8 @@ STATIC_URL = '/static/'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+CRON_CLASSES = [
+    "certificates.cron.CronJobTest",
+    # ...
+]
