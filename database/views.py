@@ -2,6 +2,7 @@ from django.shortcuts import render
 from datetime import datetime
 
 from .models import BigIPNodes, Certificates, ProfileSSLClient, Database, VirtualServer
+from django.db.models import Q
 
 import requests
 
@@ -190,7 +191,7 @@ def database(request):
 
         # virtual server profilesslclient_id
         # doorloop alle virtual servers
-        for virtualserver in VirtualServer.objects.all():
+        for virtualserver in VirtualServer.objects.filter(bigip_name_id__exact=bigip_node_id):
 
             if virtualserver.profiles == '':
 
@@ -200,8 +201,11 @@ def database(request):
             else:
 
                 # profilesslclient tabel query op basis van bigipname_id en partitie
-                client_ssl_profiles = ProfileSSLClient.objects.filter(partition__exact=virtualserver.partition,
-                                                bigip_name_id__exact=virtualserver.bigip_name_id)
+                ##client_ssl_profiles = ProfileSSLClient.objects.filter(partition__exact=virtualserver.partition,
+                #                                bigip_name_id__exact=virtualserver.bigip_name_id)
+                client_ssl_profiles = ProfileSSLClient.objects.filter(Q(partition__exact=virtualserver.partition)
+                                                                      | Q(partition__exact='Common'),
+                                                                      bigip_name_id__exact=virtualserver.bigip_name_id)
 
                 # de gekoppelde profielenlijst doorlopen, opzoek naar een client ssl profiel
                 for virtual_server_profile in virtualserver.profiles.split(','):
