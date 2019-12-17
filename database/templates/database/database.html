@@ -53,6 +53,14 @@
 
     {% endfor %}
 
+    <p>Server SSL Profile:<p>
+
+    {% for profile_ssl_server in database_updates.profile_ssl_server %}
+
+        <li>{{ profile_ssl_server }}</li>
+
+    {% endfor %}
+
     <p>Virtual servers:<p>
 
     {% for virtual_server in database_updates.virtual_servers %}
