@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from datetime import datetime
 
-from .models import BigIPNodes, Certificates, ProfileSSLClient, Database, VirtualServer
+from .models import *
 from django.db.models import Q
 
 import requests
@@ -39,6 +39,9 @@ def database(request):
         # data verwijderen - profileCSSLClient tabel
         ProfileSSLClient.objects.all().filter(bigip_name_id__exact=bigip_node_id).delete()
 
+        # data verwijderen - profileCSSLServer tabel
+        ProfileSSLServer.objects.all().filter(bigip_name_id__exact=bigip_node_id).delete()
+
         # data verwijderen - virtualserver tabel
         VirtualServer.objects.all().filter(bigip_name_id__exact=bigip_node_id).delete()
 
@@ -61,6 +64,12 @@ def database(request):
         url = 'https://%s/mgmt/tm/ltm/profile/client-ssl' % bigip_ip
         profile_cssl = requests.get(url, headers=headers, verify=False)
         profile_cssl_list_dict = profile_cssl.json()['items']
+
+        # server SSL profile details ophalen uit de opgegeven BigIP node
+        bigip_ip = request.POST['bigip_ip']
+        url = 'https://%s/mgmt/tm/ltm/profile/server-ssl' % bigip_ip
+        profile_server_ssl = requests.get(url, headers=headers, verify=False)
+        profile_server_ssl_list_dict = profile_server_ssl.json()['items']
 
         # virtual server details ophalen uit de opgegeven BigIP node
         # bij het wegschrijven naar de database worden ook nog API calls gedaan voor het achterhalen van de profielen
@@ -122,19 +131,52 @@ def database(request):
         for profile_cssl_dict in profile_cssl_list_dict:
 
             # bigip_name = BigIPNodes.objects.get(bigip_ip=bigip_ip)
-            # certificate_id = Certificates.objects.get(full_name__exact=profile_cssl_dict['fullPath']).id
+            # certificate_id = Certificates.objects.get(full_name__exact=profile_cssl_dict['cert'],
+            #                                                       bigip_name_id__exact=bigip_node_id).id
             # full_name = profile_cssl_dict['fullPath']
             # partition = profile_cssl_dict['partition']
             # name = profile_cssl_dict['name']
 
-            certificate_id = Certificates.objects.get(full_name__exact=profile_cssl_dict['cert'],
+
+            #certificate pk bepalen
+            if profile_cssl_dict['cert'] != 'none':
+                certificate_id = Certificates.objects.get(full_name__exact=profile_cssl_dict['cert'],
                                                       bigip_name_id__exact=bigip_node_id).id
+            else:
+                certificate_id = ''
+
             BigIPNode.profilesslclient_set.create(certificate_id=certificate_id,
                                                   full_name=profile_cssl_dict['fullPath'],
                                                   partition=profile_cssl_dict['partition'],
                                                   name=profile_cssl_dict['name'])
 
             new_profile_cssl.append(profile_cssl_dict['name'])
+
+        # server SSL tabel
+        new_profile_ssl_server = []
+        for profile_server_ssl_dict in profile_server_ssl_list_dict:
+
+            # bigip_name = BigIPNodes.objects.get(bigip_ip=bigip_ip)
+            # certificate_id = Certificates.objects.get(full_name__exact=profile_server_ssl_dict['cert'],
+            #                                                           bigip_name_id__exact=bigip_node_id).id
+            # full_name = profile_server_ssl_dict['fullPath']
+            # partition = profile_server_ssl_dict['partition']
+            # name = profile_server_ssl_dict['name']
+
+            # certificate pk bepalen
+            if profile_server_ssl_dict['cert'] != 'none':
+                certificate_id = Certificates.objects.get(full_name__exact=profile_server_ssl_dict['cert'],
+                                                          bigip_name_id__exact=bigip_node_id).id
+            else:
+                certificate_id = ''
+
+            BigIPNode.profilesslserver_set.create(certificate_id=certificate_id,
+                                                  full_name=profile_server_ssl_dict['fullPath'],
+                                                  partition=profile_server_ssl_dict['partition'],
+                                                  name=profile_server_ssl_dict['name'])
+
+            new_profile_ssl_server.append(profile_server_ssl_dict['name'])
+
 
 
         # virtual server tabel
@@ -144,6 +186,7 @@ def database(request):
 
             # bigip_name = BigIPNodes.objects.get(bigip_ip=bigip_ip)
             # profilesslclient_id = profilesslclient.objects.get(name__exact=profiles_dict['name']).id
+            # profilesslserver_id = profilesslserver.objects.get(name__exact=profiles_dict['name']).id
             # full_name = virtual_servers_dict['fullPath']
             # partition = virtual_servers_dict['partition']
             # name = virtual_servers_dict['name']
@@ -207,11 +250,16 @@ def database(request):
                                                                       | Q(partition__exact='Common'),
                                                                       bigip_name_id__exact=virtualserver.bigip_name_id)
 
+                server_ssl_profiles = ProfileSSLServer.objects.filter(Q(partition__exact=virtualserver.partition)
+                                                                      | Q(partition__exact='Common'),
+                                                                      bigip_name_id__exact=virtualserver.bigip_name_id)
+
                 # de gekoppelde profielenlijst doorlopen, opzoek naar een client ssl profiel
                 for virtual_server_profile in virtualserver.profiles.split(','):
 
                     #print("virtual server profile name: " + virtual_server_profile)
 
+                    #client ssl profile foreign key velden vullen in de virtual server tabel
                     for client_ssl_profile in client_ssl_profiles:
 
                        #print("client ssl profile name: " + client_ssl_profile.name)
@@ -226,22 +274,23 @@ def database(request):
                         else:
                             continue
 
+                    #server ssl profile foreign key velden vullen in de virtual server tabel
+                    for server_ssl_profile in server_ssl_profiles:
 
-        #molecule_set = Molecule.objects.all()
-        # One database query to test if any rows exist.
-        #if molecule_set.exists():
-            # Another database query to start fetching the rows in batches.
-        #    for molecule in molecule_set.iterator():
-         #       print(molecule.velocity)
-
-        #Client SSL profile
-
-
-
+                        if virtual_server_profile == server_ssl_profile.name:
+                            # match gevonden --> update virtual server tabel
+                            VirtualServer.objects.all().filter(name__exact=virtualserver.name,
+                                                               bigip_name_id__exact=virtualserver.bigip_name_id,
+                                                               partition__exact=virtualserver.partition). \
+                                update(profilesslserver_id=server_ssl_profile.id)
+                            break
+                        else:
+                            continue
 
         # toegevoegde entries meegeven om weer te geven op de database.html pagina
         database_updates['certificates'] = new_certs
         database_updates['profile_cssl'] = new_profile_cssl
+        database_updates['profile_ssl_server'] = new_profile_ssl_server
         database_updates['virtual_servers'] = new_virtual_server
 
         # database tabel bijwerken zodat het duidelijk is van welke datum de huidige configuratie is

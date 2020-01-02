@@ -41,7 +41,17 @@ class Certificates(models.Model):
 
 class ProfileSSLClient(models.Model):
     bigip_name = models.ForeignKey(BigIPNodes, on_delete=models.CASCADE)
-    certificate = models.ForeignKey(Certificates, on_delete=models.CASCADE)
+    certificate = models.ForeignKey(Certificates, on_delete=models.CASCADE, null=True)
+    full_name = models.CharField(max_length=200)
+    partition = models.CharField(max_length=200)
+    name = models.CharField(max_length=200)
+
+    def __str__(self):
+        return self.name
+
+class ProfileSSLServer(models.Model):
+    bigip_name = models.ForeignKey(BigIPNodes, on_delete=models.CASCADE)
+    certificate = models.ForeignKey(Certificates, on_delete=models.CASCADE, null=True)
     full_name = models.CharField(max_length=200)
     partition = models.CharField(max_length=200)
     name = models.CharField(max_length=200)
@@ -52,6 +62,7 @@ class ProfileSSLClient(models.Model):
 class VirtualServer(models.Model):
     bigip_name = models.ForeignKey(BigIPNodes, on_delete=models.CASCADE)
     profilesslclient = models.ForeignKey(ProfileSSLClient, on_delete=models.CASCADE, null=True)
+    profilesslserver = models.ForeignKey(ProfileSSLServer, on_delete=models.CASCADE, null=True)
     full_name = models.CharField(max_length=200)
     name = models.CharField(max_length=200)
     partition = models.CharField(max_length=200)

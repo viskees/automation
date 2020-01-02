@@ -12,7 +12,9 @@
 
     </form>
 
-{% if query_data %}
+{% if query_data_profilesslclient %}
+
+    <p>Virtual servers met SSL Client profielen:</p>
 
     <p><table>
         <tr>
@@ -28,7 +30,7 @@
 
         <form action="{% url 'certificates:certificates' %}" method="post">
             {% csrf_token %}
-            {% for virtual_server in query_data %}
+            {% for virtual_server in query_data_profilesslclient %}
                 <tr>
                     <td>
                         <input type="radio" name="cert" value="name:{{ virtual_server.profilesslclient.certificate.name }}, id:{{virtual_server.bigip_name_id}}">
@@ -40,6 +42,43 @@
                     <td>{{ virtual_server.profilesslclient.name }}</td>
                     <td>{{ virtual_server.profilesslclient.certificate.name }}</td>
                     <td>{{ virtual_server.profilesslclient.certificate.expiration }}</td>
+                </tr>
+            {% endfor %}
+
+
+    </table></p>
+
+    <input type="submit" value="Generate CSR">
+    </form>
+
+    <p>Virtual servers met SSL Server profielen:</p>
+
+    <p><table>
+        <tr>
+            <th>Generate CSR</th>
+            <th>Virtual Server</th>
+            <th>Partition</th>
+            <th>IP</th>
+            <th>Cluster</th>
+            <th>Server SSL Profile</th>
+            <th>Cert</th>
+            <th>Expiration</th>
+        </tr>
+
+        <form action="{% url 'certificates:certificates' %}" method="post">
+            {% csrf_token %}
+            {% for virtual_server in query_data_profilesslserver %}
+                <tr>
+                    <td>
+                        <input type="radio" name="cert" value="name:{{ virtual_server.profilesslserver.certificate.name }}, id:{{virtual_server.bigip_name_id}}">
+                    </td>
+                    <td>{{ virtual_server.name }}</td>
+                    <td>{{ virtual_server.partition }}</td>
+                    <td>{{ virtual_server.destination }}</td>
+                    <td>{{ virtual_server.bigip_name.bigip_name}}</td>
+                    <td>{{ virtual_server.profilesslserver.name }}</td>
+                    <td>{{ virtual_server.profilesslserver.certificate.name }}</td>
+                    <td>{{ virtual_server.profilesslserver.certificate.expiration }}</td>
                 </tr>
             {% endfor %}
 
