@@ -1,6 +1,7 @@
 from django.shortcuts import render
 
 from database.models import *
+from .models import *
 
 from datetime import date
 
@@ -10,57 +11,62 @@ import requests
 
 def certificates(request):
 
-    headers = {'Authorization': 'Basic YWRtaW46YWRtaW4=', 'Content-Type': 'application/json'}
-
     print(request.POST)
 
     context = {}
 
     if 'query_db_certs' in request.POST:
-        #context = {"query_data": Certificates.objects.all().order_by('expiration')}
-        context = {"query_data_profilesslclient": VirtualServer.objects.select_related().order_by('profilesslclient__certificate__expiration').filter(profilesslclient_id__isnull=False),
-                   "query_data_profilesslserver": VirtualServer.objects.select_related().order_by('profilesslserver__certificate__expiration').filter(profilesslserver_id__isnull=False)}
 
-    elif 'cert' in request.POST:
-        colon, cert_name, bigip_id = request.POST['cert'].split(":")
-        cert_name, bigip_id_not_needed = cert_name.split(',')
-        #print(cert_name)
-        context = {'certificate_csr': Certificates.objects.all().filter(name__exact=cert_name, bigip_name_id__exact=bigip_id)}
+        ########### Database van de certificaten app eerst opschonen
 
-    elif 'cn' in request.POST:
-        bigip_ip = BigIPNodes.objects.all().get(bigip_name__exact=request.POST['bigip_name']).bigip_ip
-        create_key_url = 'https://%s/mgmt/tm/sys/crypto/key' % bigip_ip
+        # omdat er geen timestamp beschikbaar is van de laatste configwijziging binnen het F5 cluster
+        # kan er niet worden bepaald of bepaalde tabellen moeten worden bijgewerkt.
+        # Daarom worden alle configuratietabellen die horen bij het betreffende F5 cluster opnieuw opgebouwd.
 
-        #create private key
-        #post_data = { "name":':common:' + request.POST['name'] + '.key', "keySize":'2048', "keyType":'rsa-private'}
+        # data verwijderen - CertClientSSLVirtualServer tabel
+        CertClientSSLVirtualServer.objects.all().delete()
 
-        #create_key_status_code = requests.post(create_key_url, headers=headers, verify=False, json=post_data).status_code
+        #verzameltabel waarmee de certificaten op verloopdatum kunnen worden gesorteerd, bevat de volgende velden.
+        #zowel de vitual server als de client ssl profielen kunnen vaker zijn toegepast per certificaat.
+        #
+        #cert_name =
+        #cert_partition =
+        #cert_expiration =
+        #cert_cluster =
+        #cssl_name =
+        #cssl_partition =
+        #vs_name =
+        #vs_partition =
+        #vs_ip =
 
-        # create key and csr in one API call
-        post_data = { "name":request.POST['name'] + '.key', "commonName":request.POST['cn'],
-                     "keySize":"2048", "keyType":"rsa-private",
-                     "options":[{"gen-csr":'csr_' + request.POST['name']}], "organization":request.POST['o'],
-                     "ou":request.POST['ou'], "city":request.POST['city'], "subject-alternative-name":request.POST['san']}
+        for cert_from_db_app in Certificates.objects.all():
 
-        create_key_status_code = requests.post(create_key_url, headers=headers, verify=False,
-                                               json=post_data).status_code
+            print('cert name: ' + cert_from_db_app.full_name)
 
-        context = { "status_code_key": create_key_status_code}
+            #maak per client ssl profiel een certvs entry in de CertClientSSLVirtualServer tabel
+            for cssl_from_db_app in ProfileSSLClient.objects.filter(certificates__full_name__exact=cert_from_db_app.full_name):
+
+                print('cssl name: ' + cssl_from_db_app.full_name)
+
+                #en breidt dit uit met virtual server configuratie informatie
+                for vs_from_db_app in VirtualServer.objects.filter(profilesslclient__full_name=cssl_from_db_app.full_name):
+
+                    print('virtual server name: ' + vs_from_db_app.full_name)
+                    #voeg een nieuwe certificaatregel toe per virtual server in de CertClientSSLVirtualServer tabel
+                    cert_clientssl_virtualserver = CertClientSSLVirtualServer(cert_name=cert_from_db_app.full_name,
+                                                             cert_partition=cert_from_db_app.partition,
+                                                             cert_expiration=cert_from_db_app.expiration,
+                                                             cert_cluster=BigIPNodes.objects.get(pk=cert_from_db_app.bigip_name_id),
+                                                             cssl_name=cssl_from_db_app.full_name,
+                                                             cssl_partition=cssl_from_db_app.partition,
+                                                             vs_name=vs_from_db_app.full_name,
+                                                             vs_partition=vs_from_db_app.partition,
+                                                             vs_ip=vs_from_db_app.destination)
+
+                    cert_clientssl_virtualserver.save()
+
+
+        context = {"cert_clientssl_virtualserver": CertClientSSLVirtualServer.objects.all()}
 
 
     return render(request, 'certificates/certificates.html', context)
-
-#json post voor CSR
-'''{
-	"name": "test_csr.key",
-	"commonName": "test_csr.local",
-	"keySize":"4096",
-	"keyType":"rsa-private",
-	"options":[{"gen-csr":"test_csr.local"}],
-	"organization":"Labje",
-	"ou":"ASD",
-	"city":"Assen",
-	"state":
-	"subject-alternative-name":"DNS:test_csr.local, DNS:www.test_csr.local"
-}
-'''

@@ -20,8 +20,51 @@ class Database(models.Model):
     def __str__(self):
         return self.bigip_name
 
+class VirtualServer(models.Model):
+    bigip_name = models.ForeignKey(BigIPNodes, on_delete=models.CASCADE)
+    full_name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200)
+    partition = models.CharField(max_length=200)
+    destination = models.CharField(max_length=200)
+    profiles = models.CharField(max_length=200)
+
+    class Meta:
+        ordering = ['bigip_name']
+
+    def __str__(self):
+        return self.name
+
+class ProfileSSLClient(models.Model):
+    bigip_name = models.ForeignKey(BigIPNodes, on_delete=models.CASCADE)
+    virtual_server = models.ManyToManyField(VirtualServer)
+    full_name = models.CharField(max_length=200)
+    partition = models.CharField(max_length=200)
+    name = models.CharField(max_length=200)
+    cert_names = models.CharField(max_length=200)
+
+    class Meta:
+        ordering = ['bigip_name']
+
+    def __str__(self):
+        return self.name
+
+class ProfileSSLServer(models.Model):
+    bigip_name = models.ForeignKey(BigIPNodes, on_delete=models.CASCADE)
+    virtual_server = models.ManyToManyField(VirtualServer)
+    full_name = models.CharField(max_length=200)
+    partition = models.CharField(max_length=200)
+    name = models.CharField(max_length=200)
+
+    class Meta:
+        ordering = ['bigip_name']
+
+    def __str__(self):
+        return self.name
+
+
 class Certificates(models.Model):
     bigip_name = models.ForeignKey(BigIPNodes, on_delete=models.CASCADE)
+    profile_ssl_client = models.ManyToManyField(ProfileSSLClient)
     partition = models.CharField(max_length=200)
     name = models.CharField(max_length=200)
     full_name = models.CharField(max_length=200)
@@ -36,38 +79,8 @@ class Certificates(models.Model):
     state = models.CharField(max_length=200)
     subjectAlternativeName = models.CharField(max_length=2048)
 
-    def __str__(self):
-        return self.name
-
-class ProfileSSLClient(models.Model):
-    bigip_name = models.ForeignKey(BigIPNodes, on_delete=models.CASCADE)
-    certificate = models.ForeignKey(Certificates, on_delete=models.CASCADE, null=True)
-    full_name = models.CharField(max_length=200)
-    partition = models.CharField(max_length=200)
-    name = models.CharField(max_length=200)
-
-    def __str__(self):
-        return self.name
-
-class ProfileSSLServer(models.Model):
-    bigip_name = models.ForeignKey(BigIPNodes, on_delete=models.CASCADE)
-    certificate = models.ForeignKey(Certificates, on_delete=models.CASCADE, null=True)
-    full_name = models.CharField(max_length=200)
-    partition = models.CharField(max_length=200)
-    name = models.CharField(max_length=200)
-
-    def __str__(self):
-        return self.name
-
-class VirtualServer(models.Model):
-    bigip_name = models.ForeignKey(BigIPNodes, on_delete=models.CASCADE)
-    profilesslclient = models.ForeignKey(ProfileSSLClient, on_delete=models.CASCADE, null=True)
-    profilesslserver = models.ForeignKey(ProfileSSLServer, on_delete=models.CASCADE, null=True)
-    full_name = models.CharField(max_length=200)
-    name = models.CharField(max_length=200)
-    partition = models.CharField(max_length=200)
-    destination = models.CharField(max_length=200)
-    profiles = models.CharField(max_length=200)
+    class Meta:
+        ordering = ['bigip_name']
 
     def __str__(self):
         return self.name
