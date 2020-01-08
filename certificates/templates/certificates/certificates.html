@@ -45,6 +45,44 @@
         {% endfor %}
 
 
+    </table></p></p>
+
+{% endif %}
+
+{% if cert_serverssl_virtualserver %}
+
+    <p>Certificaten op basis van Server SSL profielen:</p>
+
+    <p><table>
+
+        <tr>
+            <th>Cert Name</th>
+            <th>Cert Partition</th>
+            <th>Cert Expiration</th>
+            <th>Cert Cluster</th>
+            <th>Server SSL Profile Name</th>
+            <th>Server SSL Partition</th>
+            <th>Virtual Server Name</th>
+            <th>Virtual Server Partition</th>
+            <th>Virtual Server Destination</th>
+        </tr>
+
+        {% for certificate in cert_serverssl_virtualserver %}
+
+            <tr>
+                <td>{{ certificate.cert_name }}</td>
+                <td>{{ certificate.cert_partition }}</td>
+                <td>{{ certificate.cert_expiration }}</td>
+                <td>{{ certificate.cert_cluster }}</td>
+                <td>{{ certificate.server_ssl_name }}</td>
+                <td>{{ certificate.server_ssl_partition}}</td>
+                <td>{{ certificate.vs_name }}</td>
+                <td>{{ certificate.vs_partition }}</td>
+                <td>{{ certificate.vs_ip }}</td>
+         </tr>
+        {% endfor %}
+
+
     </table></p>
 
 {% endif %}

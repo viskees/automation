@@ -48,20 +48,6 @@ class ProfileSSLClient(models.Model):
     def __str__(self):
         return self.name
 
-class ProfileSSLServer(models.Model):
-    bigip_name = models.ForeignKey(BigIPNodes, on_delete=models.CASCADE)
-    virtual_server = models.ManyToManyField(VirtualServer)
-    full_name = models.CharField(max_length=200)
-    partition = models.CharField(max_length=200)
-    name = models.CharField(max_length=200)
-
-    class Meta:
-        ordering = ['bigip_name']
-
-    def __str__(self):
-        return self.name
-
-
 class Certificates(models.Model):
     bigip_name = models.ForeignKey(BigIPNodes, on_delete=models.CASCADE)
     profile_ssl_client = models.ManyToManyField(ProfileSSLClient)
@@ -78,6 +64,20 @@ class Certificates(models.Model):
     country = models.CharField(max_length=200)
     state = models.CharField(max_length=200)
     subjectAlternativeName = models.CharField(max_length=2048)
+
+    class Meta:
+        ordering = ['bigip_name']
+
+    def __str__(self):
+        return self.name
+
+class ProfileSSLServer(models.Model):
+    bigip_name = models.ForeignKey(BigIPNodes, on_delete=models.CASCADE)
+    certificate = models.ForeignKey(Certificates, on_delete=models.CASCADE, null=True)
+    virtual_server = models.ManyToManyField(VirtualServer)
+    full_name = models.CharField(max_length=200)
+    partition = models.CharField(max_length=200)
+    name = models.CharField(max_length=200)
 
     class Meta:
         ordering = ['bigip_name']

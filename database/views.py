@@ -200,11 +200,17 @@ def database(request):
         for profile_server_ssl_dict in profile_server_ssl_list_dict:
 
             # bigip_name = BigIPNodes.objects.get(bigip_ip=bigip_ip)
+            # certificate_id = Certificate.objects.filter(full_name__exact=profile_server_ssl_dict.get('Cert')).get(id))
             # full_name = profile_server_ssl_dict['fullPath']
             # partition = profile_server_ssl_dict['partition']
             # name = profile_server_ssl_dict['name']
 
+            #print(profile_server_ssl_dict.get('cert'))
+            #print(Certificates.objects.get(full_name__exact=profile_server_ssl_dict.get('cert')).id)
+
             BigIPNode.profilesslserver_set.create(full_name=profile_server_ssl_dict['fullPath'],
+                                                  certificate_id=Certificates.objects.get(full_name__exact=profile_server_ssl_dict.get('cert'),
+                                                                                          bigip_name_id__exact=BigIPNodes.objects.get(bigip_ip=bigip_ip)).id if 'cert' in profile_server_ssl_dict.get('cert')!= 'none' else '',
                                                   partition=profile_server_ssl_dict['partition'],
                                                   name=profile_server_ssl_dict['name'])
 
@@ -233,11 +239,11 @@ def database(request):
                 # de gekoppelde certlijst doorlopen, opzoek naar een certificaat
                 for cert_profilesslclient in profilesslclient.cert_names.split(','):
 
-                    print("client ssl cert naam: " + cert_profilesslclient)
+                    #print("client ssl cert naam: " + cert_profilesslclient)
 
                     for cert_query_set in Certificates_query_set:
 
-                        print("certificate name from query set: " + cert_query_set.full_name)
+                       # print("certificate name from query set: " + cert_query_set.full_name)
 
                         if cert_profilesslclient == cert_query_set.full_name:
 
