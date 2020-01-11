@@ -78,4 +78,4 @@ class Command(BaseCommand):
 
         #print(mail_body)
 
-        send_mail(mail_subject, mail_body, 'DictuCloudASD@dictu.nl', ['DictuCloudASD@dictu.nl', 'd.eshuis@dictu.nl', 'r.bakker@dictu.nl'])
+        send_mail(mail_subject, mail_body, mailadressen)
