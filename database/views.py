@@ -161,11 +161,9 @@ def database(request):
 
             slash, cert_partition, cert_name = cert_dict['name'].split("/")
 
-<<<<<<< HEAD
             print("Certificatentabel " + cert_dict['name'])
-=======
+
             #print(cert_dict['name'])
->>>>>>> fcc47613381136ebd2954b3cb1af533efeb4c405
 
             BigIPNode.certificates_set.create(bigip_name = BigIPNodes.objects.get(bigip_ip=bigip_ip),
                                               name=cert_name,
