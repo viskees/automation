@@ -55,7 +55,7 @@ def certificates(request):
                 #print('cssl name: ' + cssl_from_db_app.full_name)
 
                 #en breidt dit uit met virtual server configuratie informatie
-                for vs_from_db_app in VirtualServer.objects.filter(profilesslclient__full_name=cssl_from_db_app.full_name,
+                for vs_from_db_app in VirtualServer.objects.filter(profile_client_ssl__full_name=cssl_from_db_app.full_name,
                                                                    bigip_name_id__exact=cssl_from_db_app.bigip_name_id):
 
                     #print('virtual server name: ' + vs_from_db_app.full_name)
@@ -99,7 +99,7 @@ def certificates(request):
                     #print('server ssl name: ' + server_ssl_from_db_app.full_name)
 
                     # en breidt dit uit met virtual server configuratie informatie
-                    for vs_from_db_app in VirtualServer.objects.filter(profilesslserver__full_name=server_ssl_from_db_app.full_name,
+                    for vs_from_db_app in VirtualServer.objects.filter(profile_server_ssl__full_name=server_ssl_from_db_app.full_name,
                                                                        bigip_name_id__exact=server_ssl_from_db_app.bigip_name_id):
 
                         #print('virtual server name: ' + vs_from_db_app.full_name)

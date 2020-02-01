@@ -23,6 +23,8 @@ def database(request):
 
         ########### Database eerst opschonen
 
+        print("Database tabellen opschonen van " + BigIPNodes.objects.get(bigip_ip__exact=request.POST['bigip_ip']).bigip_name)
+
         # omdat er geen timestamp beschikbaar is van de laatste configwijziging binnen het F5 cluster
         # kan er niet worden bepaald of bepaalde tabellen moeten worden bijgewerkt.
         # Daarom worden alle configuratietabellen die horen bij het betreffende F5 cluster opnieuw opgebouwd.
@@ -53,21 +55,28 @@ def database(request):
 
         ########### REST API calls
 
+        # certificaat meldingen uitschakelen
+        from requests.packages.urllib3.exceptions import InsecureRequestWarning
+        requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
         # certificaat details ophalen uit de opgegeven BigIP node
         bigip_ip = request.POST['bigip_ip']
         url = 'https://%s/mgmt/tm/sys/crypto/cert' % bigip_ip
+        print("Rest API call uitvoeren " + url)
         certs = requests.get(url, headers=headers, verify=False)
         certs_list_dict = certs.json()['items']
 
         # client SSL profile details ophalen uit de opgegeven BigIP node
         bigip_ip = request.POST['bigip_ip']
         url = 'https://%s/mgmt/tm/ltm/profile/client-ssl' % bigip_ip
+        print("Rest API call uitvoeren " + url)
         profile_cssl = requests.get(url, headers=headers, verify=False)
         profile_cssl_list_dict = profile_cssl.json()['items']
 
         # server SSL profile details ophalen uit de opgegeven BigIP node
         bigip_ip = request.POST['bigip_ip']
         url = 'https://%s/mgmt/tm/ltm/profile/server-ssl' % bigip_ip
+        print("Rest API call uitvoeren " + url)
         profile_server_ssl = requests.get(url, headers=headers, verify=False)
         profile_server_ssl_list_dict = profile_server_ssl.json()['items']
 
@@ -75,6 +84,7 @@ def database(request):
         # bij het wegschrijven naar de database worden ook nog API calls gedaan voor het achterhalen van de profielen
         bigip_ip = request.POST['bigip_ip']
         url = 'https://%s/mgmt/tm/ltm/virtual' % bigip_ip
+        print("Rest API call uitvoeren " + url)
         virtual_servers = requests.get(url, headers=headers, verify=False)
         virtual_servers_list_dict = virtual_servers.json()['items']
 
@@ -83,6 +93,8 @@ def database(request):
 
         #update op basis van deze queryset
         BigIPNode = BigIPNodes.objects.get(bigip_ip=bigip_ip)
+
+        print("Database tabellen vullen voor " + BigIPNodes.objects.get(bigip_ip__exact=request.POST['bigip_ip']).bigip_name)
 
         # virtual server tabel
         new_virtual_server = []
@@ -115,6 +127,8 @@ def database(request):
             #list to string
             profile_names = ','.join(profile_names_list)
 
+            print("Virtual server tabel " + virtual_servers_dict['name'])
+
             BigIPNode.virtualserver_set.create(full_name=virtual_servers_dict['fullPath'],
                                                name=virtual_servers_dict['name'],
                                                partition=virtual_servers_dict['partition'],
@@ -146,6 +160,8 @@ def database(request):
             #subjectAlternativeName = cert_dict['subjectAlternativeName']
 
             slash, cert_partition, cert_name = cert_dict['name'].split("/")
+
+            print("Certificatentabel " + cert_dict['name'])
 
             BigIPNode.certificates_set.create(bigip_name = BigIPNodes.objects.get(bigip_ip=bigip_ip),
                                               name=cert_name,
@@ -188,6 +204,8 @@ def database(request):
                 #list to string
                 cert_names = ','.join(cert_names_list)
 
+            print("Client SSL profile " + profile_cssl_dict['fullPath'])
+
             BigIPNode.profilesslclient_set.create(full_name=profile_cssl_dict['fullPath'],
                                                   partition=profile_cssl_dict['partition'],
                                                   name=profile_cssl_dict['name'],
@@ -208,6 +226,8 @@ def database(request):
             #print(profile_server_ssl_dict.get('cert'))
             #print(Certificates.objects.get(full_name__exact=profile_server_ssl_dict.get('cert')).id)
 
+            print("Server SSL profile " + profile_server_ssl_dict['fullPath'])
+
             BigIPNode.profilesslserver_set.create(full_name=profile_server_ssl_dict['fullPath'],
                                                   certificate_id=Certificates.objects.get(full_name__exact=profile_server_ssl_dict.get('cert'),
                                                                                           bigip_name_id__exact=BigIPNodes.objects.get(bigip_ip=bigip_ip)).id if 'cert' in profile_server_ssl_dict.get('cert')!= 'none' else '',
@@ -218,6 +238,8 @@ def database(request):
 
 
         ########### Tabellen koppelen
+
+        print("Database tabellen koppelen voor " + BigIPNodes.objects.get(bigip_ip__exact=request.POST['bigip_ip']).bigip_name)
 
         # doorloop de client SSL profielen die horen bij deze bigip en leg de many-to-many relaties met de certificatentabel
         for profilesslclient in ProfileSSLClient.objects.filter(bigip_name_id__exact=bigip_node_id):
@@ -239,17 +261,18 @@ def database(request):
                 # de gekoppelde certlijst doorlopen, opzoek naar een certificaat
                 for cert_profilesslclient in profilesslclient.cert_names.split(','):
 
-                    #print("client ssl cert naam: " + cert_profilesslclient)
+                    print("client ssl cert naam: " + cert_profilesslclient)
 
                     for cert_query_set in Certificates_query_set:
 
-                       # print("certificate name from query set: " + cert_query_set.full_name)
+                        print("certificate name from query set: " + cert_query_set.full_name)
 
                         if cert_profilesslclient == cert_query_set.full_name:
 
                             # match gevonden --> m2m koppeltabel database_certificates_profile_ssl_client bijwerken
                             #a1.publications.add(p1)
-                            cert_query_set.profile_ssl_client.add(profilesslclient)
+                            print("Match gevonden en profilessl client certificates koppeltabel bijwerken")
+                            cert_query_set.profilesslclient_set.add(profilesslclient)
 
                             break
                         else:
@@ -288,7 +311,7 @@ def database(request):
                         if virtual_server_profile == client_ssl_profile.name:
 
                             # match gevonden --> m2m koppeltabel virtual server en client ssl profiel bijwerken
-                            client_ssl_profile.virtual_server.add(virtualserver)
+                            client_ssl_profile.virtualserver_set.add(virtualserver)
 
                             break
                         else:
@@ -299,7 +322,7 @@ def database(request):
                         if virtual_server_profile == server_ssl_profile.name:
 
                             # match gevonden --> m2m koppeltabel virtual server en server ssl profiel bijwerken
-                            server_ssl_profile.virtual_server.add(virtualserver)
+                            server_ssl_profile.virtualserver_set.add(virtualserver)
 
                             break
                         else:
