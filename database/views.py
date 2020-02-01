@@ -11,7 +11,7 @@ import requests
 def database(request):
 
     # headers voor de API calls
-    headers = {'Authorization': 'Basic YWRtaW46YWRtaW4=', 'Content-Type': 'application/json'}
+    headers = {'Authorization': 'Basic 123456', 'Content-Type': 'application/json'}
 
     # bigip_node_list voor het weergeven van het form in database.html daarnaast wordt de database tabel meegegeven
     # voor het weergeven van datetimestamp
@@ -161,7 +161,11 @@ def database(request):
 
             slash, cert_partition, cert_name = cert_dict['name'].split("/")
 
+<<<<<<< HEAD
             print("Certificatentabel " + cert_dict['name'])
+=======
+            #print(cert_dict['name'])
+>>>>>>> fcc47613381136ebd2954b3cb1af533efeb4c405
 
             BigIPNode.certificates_set.create(bigip_name = BigIPNodes.objects.get(bigip_ip=bigip_ip),
                                               name=cert_name,
@@ -169,10 +173,10 @@ def database(request):
                                               partition=cert_partition,
                                               expiration=datetime.strptime(cert_dict['apiRawValues']['expiration'],
                                                                            '%b %d %H:%M:%S %Y %Z'),
-                                              commonName = cert_dict['commonName'],
+                                              commonName = cert_dict['commonName'] if 'commonName' in cert_dict.keys() else'',
                                               certificateKeySize = cert_dict['apiRawValues']['certificateKeySize'],
                                               publicKeyType = cert_dict['apiRawValues']['publicKeyType'],
-                                              organization = cert_dict['commonName'] if 'organization' in cert_dict.keys() else '',
+                                              organization = cert_dict['organization'] if 'organization' in cert_dict.keys() else '',
                                               ou = cert_dict['ou'] if 'ou' in cert_dict.keys() else '',
                                               city = cert_dict['city'] if 'city' in cert_dict.keys() else '',
                                               country = cert_dict['country'] if 'country' in cert_dict.keys() else '',
@@ -223,14 +227,30 @@ def database(request):
             # partition = profile_server_ssl_dict['partition']
             # name = profile_server_ssl_dict['name']
 
-            #print(profile_server_ssl_dict.get('cert'))
-            #print(Certificates.objects.get(full_name__exact=profile_server_ssl_dict.get('cert')).id)
+            #print('SSL server profile name: ' + profile_server_ssl_dict.get('fullPath'))
+            #print('SSL server profile cert name: ' + profile_server_ssl_dict.get('cert'))
+            #print('BigIP id: ' + str(BigIPNodes.objects.get(bigip_ip=bigip_ip).id))
+
+
+            if profile_server_ssl_dict.get('cert') != 'none':
+                cert_ssl_server_profile = Certificates.objects.all().filter(full_name__exact=profile_server_ssl_dict.get('cert'),
+                                                                                     bigip_name_id__exact=BigIPNodes.objects.get(bigip_ip=bigip_ip).id)
+
+                certificate_id = cert_ssl_server_profile[0].id
+                #print('bijbehorende certificate ID op basis van filter query: ' + str(cert_ssl_server_profile[0].id))
+
+            else:
+                certificate_id = ''
+
+            #print('bijbehorende certificate ID op basis GET query' + str(Certificates.objects.get(full_name__exact=profile_server_ssl_dict.get('cert'),
+            #                                                                              bigip_name_id__exact=BigIPNodes.objects.get(bigip_ip=bigip_ip).id).id if 'cert' in profile_server_ssl_dict.get('cert')!= 'none' else '',))
 
             print("Server SSL profile " + profile_server_ssl_dict['fullPath'])
 
             BigIPNode.profilesslserver_set.create(full_name=profile_server_ssl_dict['fullPath'],
-                                                  certificate_id=Certificates.objects.get(full_name__exact=profile_server_ssl_dict.get('cert'),
-                                                                                          bigip_name_id__exact=BigIPNodes.objects.get(bigip_ip=bigip_ip)).id if 'cert' in profile_server_ssl_dict.get('cert')!= 'none' else '',
+                                                  certificate_id = certificate_id,
+                                                  #certificate_id=Certificates.objects.get(full_name__exact=profile_server_ssl_dict.get('cert'),
+                                                  #                                        bigip_name_id__exact=BigIPNodes.objects.get(bigip_ip=bigip_ip).id).id if 'cert' in profile_server_ssl_dict.get('cert')!= 'none' else '',
                                                   partition=profile_server_ssl_dict['partition'],
                                                   name=profile_server_ssl_dict['name'])
 
