@@ -11,7 +11,7 @@ import requests
 def database(request):
 
     # headers voor de API calls
-    headers = {'Authorization': 'Basic 123456', 'Content-Type': 'application/json'}
+    headers = {'Authorization': 'Basic YWRtaW46YWRtaW4=', 'Content-Type': 'application/json'}
 
     # bigip_node_list voor het weergeven van het form in database.html daarnaast wordt de database tabel meegegeven
     # voor het weergeven van datetimestamp
