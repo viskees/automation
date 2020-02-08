@@ -47,6 +47,12 @@ def database(request):
         # data verwijderen - virtualserver tabel
         VirtualServer.objects.all().filter(bigip_name_id__exact=bigip_node_id).delete()
 
+        # data verwijderen - irule tabel
+        Irule.objects.all().filter(bigip_name_id__exact=bigip_node_id).delete()
+
+        # data verwijderen - datagroup tabel
+        Datagroup.objects.all().filter(bigip_name_id__exact=bigip_node_id).delete()
+
         # data verwijderen - database tabel
         Database.objects.all().filter(bigip_name_id__exact=bigip_node_id).delete()
 
@@ -58,6 +64,20 @@ def database(request):
         # certificaat meldingen uitschakelen
         from requests.packages.urllib3.exceptions import InsecureRequestWarning
         requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
+        # datagroup details ophalen uit de opgegeven BigIP node
+        bigip_ip = request.POST['bigip_ip']
+        url = 'https://%s/mgmt/tm/ltm/data-group/internal' % bigip_ip
+        print("Rest API call uitvoeren " + url)
+        datagroups = requests.get(url, headers=headers, verify=False)
+        datagroups_list_dict = datagroups.json()['items']
+
+        # ilrule details ophalen uit de opgegeven BigIP node
+        bigip_ip = request.POST['bigip_ip']
+        url = 'https://%s/mgmt/tm/ltm/rule' % bigip_ip
+        print("Rest API call uitvoeren " + url)
+        irules = requests.get(url, headers=headers, verify=False)
+        irules_list_dict = irules.json()['items']
 
         # certificaat details ophalen uit de opgegeven BigIP node
         bigip_ip = request.POST['bigip_ip']
@@ -96,6 +116,103 @@ def database(request):
 
         print("Database tabellen vullen voor " + BigIPNodes.objects.get(bigip_ip__exact=request.POST['bigip_ip']).bigip_name)
 
+        ##template
+        #
+        '''
+        new_datagroups = []
+        for datagroup_dict in datagroups_list_dict:
+            # print(datagroup_dict)
+
+            
+            slash, cert_partition, cert_name = cert_dict['name'].split("/")
+
+            print("Datagrouptabel " + cert_dict['name'])
+
+            print(datagroup_dict['name'])
+
+            BigIPNode.datagroup_set.create(bigip_name=BigIPNodes.objects.get(bigip_ip=bigip_ip),
+                                              
+                                              )
+
+            new_datagroups.append(datagroup_dict['name'])
+        '''
+
+        # datagrouptabel
+        new_datagroups = []
+
+        # de volgende datagroups verwijzen naar een server SSL profile;
+        datagroup_to_be_queried = ['clientAuthorisationDataGroup']
+
+        for datagroup_dict in datagroups_list_dict:
+
+            datagroup_profile_server_ssl = []
+
+            if datagroup_dict['name'] in datagroup_to_be_queried:
+
+                # doorzoek de huidige datagroup op server ssl profiles
+                for datagroup_record in datagroup_dict['records']:
+
+                    datagroup_profile_server_ssl.append(datagroup_record['data'])
+
+            # schrijf datagroup gerecord naar database met de volgende velden
+            # bigip_name = BigIPNodes.objects.get(bigip_ip=bigip_ip)
+            # full_name = datagroup_dict['fullPath']
+            # name = datagroup_dict['name']
+            # partition = datagroup_dict['partition']
+            # datagroup_profile_server_ssl
+
+            # slash, datagroup_partition, datagroup_name = datagroup_dict['fullPath'].split("/")
+
+            print("Datagrouptabel " + datagroup_dict['name'])
+
+            BigIPNode.datagroup_set.create(bigip_name=BigIPNodes.objects.get(bigip_ip=bigip_ip),
+                                               full_name=datagroup_dict['fullPath'],
+                                               name=datagroup_dict['name'],
+                                               partition=datagroup_dict['partition'],
+                                               datagroup_profile_server_ssl=datagroup_profile_server_ssl
+                                               )
+
+            new_datagroups.append(datagroup_dict['name'])
+
+        # iruletabel
+        new_irules = []
+        for irule_dict in irules_list_dict:
+
+            # print(irule_dict)
+
+            # bigip_name = BigIPNodes.objects.get(bigip_ip=bigip_ip)
+            # datagroup = m2m koppeling
+            # full_name = irule_dict['fullPath']
+            # partition = irule_dict['partition']
+            # irule_content = irule_dict['apiAnonymous']
+            # datagroups = --> irule_content parsen op datagroups
+
+            # check irule for datagroups content obv de datagroup tabel
+            datagroups = []
+
+            for datagroup in Datagroup.objects.filter(Q(partition__exact=irule_dict['partition']) | Q(partition__exact='Common'),
+                                                      bigip_name_id__exact=BigIPNodes.objects.get(bigip_ip=bigip_ip).id):
+
+                print(irule_dict['fullPath'] + " wordt nu doorzocht op aanwezigheid van datagroup " + datagroup.name)
+
+                if datagroup.name in irule_dict['apiAnonymous']:
+
+                    print('Datagroup ' + datagroup.name + ' gevonden in irule: ' + irule_dict['fullPath'])
+
+                    datagroups.append(datagroup.name)
+
+            print("Iruletabel " + irule_dict['name'])
+
+
+            BigIPNode.irule_set.create(bigip_name=BigIPNodes.objects.get(bigip_ip=bigip_ip),
+                                       full_name = irule_dict['fullPath'],
+                                       partition = irule_dict['partition'],
+                                       #irule_content = irule_dict['apiAnonymous'],
+                                       datagroups = datagroups
+                                       )
+
+            new_irules.append(irule_dict['name'])
+
         # virtual server tabel
         new_virtual_server = []
 
@@ -107,6 +224,7 @@ def database(request):
             # name = virtual_servers_dict['name']
             # destination = virtual_servers_dict['destination']
             # profiles = profiles_dict['name']
+            # irules = virtual_servers_dict['rules']
 
 
             # virtual server profielen toevoegen
@@ -133,7 +251,9 @@ def database(request):
                                                name=virtual_servers_dict['name'],
                                                partition=virtual_servers_dict['partition'],
                                                destination=virtual_servers_dict['destination'],
-                                               profiles=profile_names)
+                                               profiles=profile_names,
+                                               irules=virtual_servers_dict['rules']
+                                               )
 
             new_virtual_server.append(virtual_servers_dict['name'])
 
@@ -295,7 +415,6 @@ def database(request):
                             break
                         else:
                             continue
-
 
         # doorloop alle virtual servers en onderliggende profielen en leg de many-to-many relaties
         for virtualserver in VirtualServer.objects.filter(bigip_name_id__exact=bigip_node_id):

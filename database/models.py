@@ -48,7 +48,7 @@ class ProfileSSLClient(models.Model):
     full_name = models.CharField(max_length=200)
     partition = models.CharField(max_length=200)
     name = models.CharField(max_length=200)
-    cert_names = models.CharField(max_length=200)
+    cert_names = models.TextField()
 
     class Meta:
         ordering = ['bigip_name']
@@ -69,15 +69,47 @@ class ProfileSSLServer(models.Model):
     def __str__(self):
         return self.name
 
-class VirtualServer(models.Model):
+class Datagroup(models.Model):
     bigip_name = models.ForeignKey(BigIPNodes, on_delete=models.CASCADE)
-    profile_client_ssl = models.ManyToManyField(ProfileSSLClient)
     profile_server_ssl = models.ManyToManyField(ProfileSSLServer)
     full_name = models.CharField(max_length=200)
     name = models.CharField(max_length=200)
     partition = models.CharField(max_length=200)
+    datagroup_profile_server_ssl = models.CharField(max_length=200)
+    #key_values = models.TextField()
+
+    class Meta:
+        ordering = ['bigip_name']
+
+    def __str__(self):
+        return self.name
+
+
+class Irule(models.Model):
+    bigip_name = models.ForeignKey(BigIPNodes, on_delete=models.CASCADE)
+    datagroup = models.ManyToManyField(Datagroup)
+    full_name = models.CharField(max_length=200)
+    partition = models.CharField(max_length=200)
+    #irule_content = models.TextField()
+    datagroups = models.CharField(max_length=200)
+
+    class Meta:
+        ordering = ['bigip_name']
+
+    def __str__(self):
+        return self.name
+
+class VirtualServer(models.Model):
+    bigip_name = models.ForeignKey(BigIPNodes, on_delete=models.CASCADE)
+    profile_client_ssl = models.ManyToManyField(ProfileSSLClient)
+    profile_server_ssl = models.ManyToManyField(ProfileSSLServer)
+    irule = models.ManyToManyField(Irule)
+    full_name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200)
+    partition = models.CharField(max_length=200)
     destination = models.CharField(max_length=200)
-    profiles = models.CharField(max_length=200)
+    profiles = models.TextField()
+    irules = models.TextField()
 
     class Meta:
         ordering = ['bigip_name']
