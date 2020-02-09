@@ -37,6 +37,23 @@
 
     Deze database tabellen zijn bijgewerkt:<p>
 
+    <p>Irules:<p>
+
+    {% for irule in database_updates.irules %}
+
+        <li>{{ irule }}</li>
+
+    {% endfor %}
+
+    <p>Datagroups:<p>
+
+    {% for datagroup in database_updates.datagroups %}
+
+        <li>{{ datagroup }}</li>
+
+    {% endfor %}
+
+
     <p>Certificaten:<p>
 
     {% for certificate in database_updates.certificates %}

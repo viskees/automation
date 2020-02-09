@@ -6,6 +6,7 @@ from django.db import models
 
 # Create your models here.
 
+
 class BigIPNodes(models.Model):
     bigip_name = models.CharField(max_length=200)
     bigip_ip = models.CharField(max_length=15)
@@ -13,12 +14,14 @@ class BigIPNodes(models.Model):
     def __str__(self):
         return self.bigip_name
 
+
 class Database(models.Model):
     bigip_name = models.ForeignKey(BigIPNodes, on_delete=models.CASCADE)
     created_on = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.bigip_name
+
 
 class Certificates(models.Model):
     bigip_name = models.ForeignKey(BigIPNodes, on_delete=models.CASCADE)
@@ -42,6 +45,7 @@ class Certificates(models.Model):
     def __str__(self):
         return self.name
 
+
 class ProfileSSLClient(models.Model):
     bigip_name = models.ForeignKey(BigIPNodes, on_delete=models.CASCADE)
     certificates = models.ManyToManyField(Certificates)
@@ -56,6 +60,7 @@ class ProfileSSLClient(models.Model):
     def __str__(self):
         return self.name
 
+
 class ProfileSSLServer(models.Model):
     bigip_name = models.ForeignKey(BigIPNodes, on_delete=models.CASCADE)
     certificate = models.ForeignKey(Certificates, on_delete=models.CASCADE, null=True)
@@ -68,6 +73,7 @@ class ProfileSSLServer(models.Model):
 
     def __str__(self):
         return self.name
+
 
 class Datagroup(models.Model):
     bigip_name = models.ForeignKey(BigIPNodes, on_delete=models.CASCADE)
@@ -90,14 +96,15 @@ class Irule(models.Model):
     datagroup = models.ManyToManyField(Datagroup)
     full_name = models.CharField(max_length=200)
     partition = models.CharField(max_length=200)
-    #irule_content = models.TextField()
+    # irule_content = models.TextField()
     datagroups = models.CharField(max_length=200)
 
     class Meta:
         ordering = ['bigip_name']
 
     def __str__(self):
-        return self.name
+        return self.full_name
+
 
 class VirtualServer(models.Model):
     bigip_name = models.ForeignKey(BigIPNodes, on_delete=models.CASCADE)

@@ -141,18 +141,22 @@ def database(request):
         new_datagroups = []
 
         # de volgende datagroups verwijzen naar een server SSL profile;
-        datagroup_to_be_queried = ['clientAuthorisationDataGroup']
+        datagroup_to_be_queried = ['clientAuthorisationDataGroup', 'webservices-outgoingClientAuthorisationDataGroup',
+                                   'ProdClientAuthorisationDataGroup']
 
         for datagroup_dict in datagroups_list_dict:
 
-            datagroup_profile_server_ssl = []
+            datagroup_profile_server_ssl_list = []
 
             if datagroup_dict['name'] in datagroup_to_be_queried:
 
                 # doorzoek de huidige datagroup op server ssl profiles
                 for datagroup_record in datagroup_dict['records']:
 
-                    datagroup_profile_server_ssl.append(datagroup_record['data'])
+                    datagroup_profile_server_ssl_list.append(datagroup_record['data'])
+
+            # datagroup_profile_server_ssl_list to string
+            datagroup_profile_server_ssl = ",".join(datagroup_profile_server_ssl_list)
 
             # schrijf datagroup gerecord naar database met de volgende velden
             # bigip_name = BigIPNodes.objects.get(bigip_ip=bigip_ip)
@@ -188,7 +192,7 @@ def database(request):
             # datagroups = --> irule_content parsen op datagroups
 
             # check irule for datagroups content obv de datagroup tabel
-            datagroups = []
+            irule_datagroups_names_list = []
 
             for datagroup in Datagroup.objects.filter(Q(partition__exact=irule_dict['partition']) | Q(partition__exact='Common'),
                                                       bigip_name_id__exact=BigIPNodes.objects.get(bigip_ip=bigip_ip).id):
@@ -199,16 +203,19 @@ def database(request):
 
                     print('Datagroup ' + datagroup.name + ' gevonden in irule: ' + irule_dict['fullPath'])
 
-                    datagroups.append(datagroup.name)
+                    irule_datagroups_names_list.append(datagroup.full_name)
 
             print("Iruletabel " + irule_dict['name'])
 
+            # datagroup list to string
+
+            irule_datagroups_names = ','.join(irule_datagroups_names_list)
 
             BigIPNode.irule_set.create(bigip_name=BigIPNodes.objects.get(bigip_ip=bigip_ip),
                                        full_name = irule_dict['fullPath'],
                                        partition = irule_dict['partition'],
                                        #irule_content = irule_dict['apiAnonymous'],
-                                       datagroups = datagroups
+                                       datagroups = irule_datagroups_names
                                        )
 
             new_irules.append(irule_dict['name'])
@@ -237,13 +244,21 @@ def database(request):
             profiles = requests.get(profile_link_bigip_ip, headers=headers, verify=False)
             profiles_list_dict = profiles.json()['items']
 
+            #profiles list to string
             profile_names_list = []
 
             for profiles_dict in profiles_list_dict:
                 profile_names_list.append(profiles_dict['name'])
 
-            #list to string
             profile_names = ','.join(profile_names_list)
+
+            # irule list to string
+            irule_names_list = []
+
+            for irule in virtual_servers_dict['rules']:
+                irule_names_list.append(irule)
+
+            irule_names = ','.join(irule_names_list)
 
             print("Virtual server tabel " + virtual_servers_dict['name'])
 
@@ -252,7 +267,7 @@ def database(request):
                                                partition=virtual_servers_dict['partition'],
                                                destination=virtual_servers_dict['destination'],
                                                profiles=profile_names,
-                                               irules=virtual_servers_dict['rules']
+                                               irules=irule_names
                                                )
 
             new_virtual_server.append(virtual_servers_dict['name'])
@@ -407,8 +422,6 @@ def database(request):
 
                         if cert_profilesslclient == cert_query_set.full_name:
 
-                            # match gevonden --> m2m koppeltabel database_certificates_profile_ssl_client bijwerken
-                            #a1.publications.add(p1)
                             print("Match gevonden en profilessl client certificates koppeltabel bijwerken")
                             cert_query_set.profilesslclient_set.add(profilesslclient)
 
@@ -447,7 +460,7 @@ def database(request):
 
                         if virtual_server_profile == client_ssl_profile.name:
 
-                            # match gevonden --> m2m koppeltabel virtual server en client ssl profiel bijwerken
+                            print('match gevonden --> m2m koppeltabel virtual server en client ssl profiel bijwerken')
                             client_ssl_profile.virtualserver_set.add(virtualserver)
 
                             break
@@ -458,14 +471,116 @@ def database(request):
 
                         if virtual_server_profile == server_ssl_profile.name:
 
-                            # match gevonden --> m2m koppeltabel virtual server en server ssl profiel bijwerken
+                            print('match gevonden --> m2m koppeltabel virtual server en server ssl profiel bijwerken')
                             server_ssl_profile.virtualserver_set.add(virtualserver)
 
                             break
                         else:
                             continue
 
+            if virtualserver.irules == '':
+
+                # als er geen irules zijn gekoppeld valt er niets te doen
+                continue
+
+            else:
+
+                # irule tabel query op basis van bigipname_id en partitie
+                irules_db_query = Irule.objects.filter(Q(partition__exact=virtualserver.partition) 
+                                                       | Q(partition__exact='Common'),
+                                                       bigip_name_id__exact=virtualserver.bigip_name_id)
+
+                # de gekoppelde profielenlijst doorlopen, opzoek naar een client- en/of server ssl profiel
+                for virtual_server_irule in virtualserver.irules.split(','):
+
+                    print("virtual server irule name: " + virtual_server_irule)
+
+                    for irule in irules_db_query:
+
+                        print("irule: " + irule.full_name)
+
+                        if virtual_server_irule == irule.full_name:
+
+                            print('match gevonden --> m2m koppeltabel virtual server en irule bijwerken')
+                            irule.virtualserver_set.add(virtualserver)
+                            break
+                        else:
+                            continue
+
+        # doorloop alle irules en onderliggende datagroup profielen en leg de many-to-many relaties
+        print('irule tabel doorlopen voor het leggen van de m2m relaties met de datagroupstabel')
+
+        for irule in Irule.objects.filter(bigip_name_id__exact=bigip_node_id):
+
+            if irule.datagroups == '':
+
+                # als er geen datagroups zijn gekoppeld valt er niets te doen
+                continue
+
+            else:
+
+            # datagroup tabel query op basis van bigipname_id en partitie
+
+                datagroup_db_query = Datagroup.objects.filter(Q(partition__exact=irule.partition)
+                                                           | Q(partition__exact='Common'),
+                                                           bigip_name_id__exact=irule.bigip_name_id)
+
+                # de gekoppelde profielenlijst doorlopen, opzoek naar een client- en/of server ssl profiel
+                for irule_datagroup_name in irule.datagroups.split(','):
+
+                    print("irule datagroup name: " + irule_datagroup_name)
+
+                    for datagroup in datagroup_db_query:
+
+                        print("db datagroup name from query : " + datagroup.full_name)
+
+                        if irule_datagroup_name == datagroup.full_name:
+
+                            print('match gevonden --> m2m koppeltabel irule en datagroup bijwerken')
+                            irule.datagroup.add(datagroup)
+                            break
+                        else:
+                            continue
+
+        # doorloop alle datagroups en onderliggende server ssl profielen en leg de many-to-many relaties
+        print('datagroup tabel doorlopen voor het leggen van de m2m relaties met de server ssl tabel')
+
+        for datagroup in Datagroup.objects.filter(bigip_name_id__exact=bigip_node_id):
+
+            if datagroup.datagroup_profile_server_ssl == '':
+
+                # als er geen server ssl profielen zijn gekoppeld valt er niets te doen
+                continue
+
+            else:
+
+                # profile server ssl tabel query op basis van bigipname_id en partitie
+
+                profile_ssl_server_query = ProfileSSLServer.objects.filter(Q(partition__exact=datagroup.partition)
+                                                                  | Q(partition__exact='Common'),
+                                                                  bigip_name_id__exact=datagroup.bigip_name_id)
+
+                # de gekoppelde profielenlijst doorlopen, opzoek naar een client- en/of server ssl profiel
+                for datagroup_profile_server_ssl_name in datagroup.datagroup_profile_server_ssl.split(','):
+
+                    print("datagroup server ssl profile name: " + datagroup_profile_server_ssl_name)
+
+                    for profile_ssl_server in profile_ssl_server_query:
+
+                        print("db profile_ssl_server name from query : " + profile_ssl_server.full_name)
+
+                        if datagroup_profile_server_ssl_name == profile_ssl_server.full_name:
+
+                            print('match gevonden --> m2m koppeltabel datagroup en server SSL profile bijwerken')
+                            datagroup.profile_server_ssl.add(profile_ssl_server)
+                            break
+                        else:
+                            continue
+
+
         # toegevoegde entries meegeven om weer te geven op de database.html pagina
+        database_updates['datagroups'] = new_datagroups
+        database_updates['irules'] = new_irules
         database_updates['certificates'] = new_certs
         database_updates['profile_cssl'] = new_profile_cssl
         database_updates['profile_ssl_server'] = new_profile_ssl_server
