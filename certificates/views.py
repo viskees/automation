@@ -29,26 +29,27 @@ def certificates(request):
         # data verwijderen - CertServerSSLVirtualServer tabel
         CertServerSSLVirtualServer.objects.all().delete()
 
-        #verzameltabel CertClientSSLVirtualServer opbouwen waarmee de certificaten op verloopdatum kunnen worden gesorteerd.
-        #
-        #zowel de vitual server als de client ssl profielen kunnen vaker zijn toegepast per certificaat.
-        #
-        #cert_name = cert_from_db_app.full_name
-        #cert_partition = cert_from_db_app.partition
-        #cert_expiration = cert_from_db_app.expiration
-        #cert_cluster = BigIPNodes.objects.get(pk=cert_from_db_app.bigip_name_id)
-        #cssl_name = cssl_from_db_app.full_name
-        #cssl_partition = cssl_from_db_app.partition
-        #vs_name = vs_from_db_app.full_name
-        #vs_partition = vs_from_db_app.partition
-        #vs_ip =  vs_from_db_app.destination
-        #
+        # data verwijderen - CertServerSSLVirtualServerViaIruleAndDatagroup tabel
+        CertServerSSLVirtualServerViaIruleAndDatagroup.objects.all().delete()
 
         for cert_from_db_app in Certificates.objects.all():
 
             #print('cert name: ' + cert_from_db_app.full_name)
 
-            #maak per client ssl profiel een certvs entry in de CertClientSSLVirtualServer tabel
+            # verzameltabel CertClientSSLVirtualServer opbouwen waarmee de certificaten op verloopdatum kunnen worden gesorteerd.
+            #
+            # zowel de vitual server als de client ssl profielen kunnen vaker zijn toegepast per certificaat.
+            #
+            # cert_name = cert_from_db_app.full_name
+            # cert_partition = cert_from_db_app.partition
+            # cert_expiration = cert_from_db_app.expiration
+            # cert_cluster = BigIPNodes.objects.get(pk=cert_from_db_app.bigip_name_id)
+            # cssl_name = cssl_from_db_app.full_name
+            # cssl_partition = cssl_from_db_app.partition
+            # vs_name = vs_from_db_app.full_name
+            # vs_partition = vs_from_db_app.partition
+            # vs_ip =  vs_from_db_app.destination
+            #
             for cssl_from_db_app in ProfileSSLClient.objects.filter(certificates__full_name__exact=cert_from_db_app.full_name,
                                                                     bigip_name_id__exact=cert_from_db_app.bigip_name_id):
 
@@ -118,12 +119,66 @@ def certificates(request):
 
                         cert_servertssl_virtualserver.save()
 
+
+                    # certificaten die gekoppeld zijn aan een virtual server via irules/data groups worden toegevoegd
+                    # aan tabel CertServerSSLVirtualServerViaIruleAndDatagroup
+
+                    for datagroup_from_db_app in Datagroup.objects.filter(profile_server_ssl__full_name=server_ssl_from_db_app.full_name,
+                                                                       bigip_name_id__exact=server_ssl_from_db_app.bigip_name_id):
+
+                        print(server_ssl_from_db_app.full_name + ' gevonden voor datagroup ' + datagroup_from_db_app.full_name)
+
+                        # op zoek naar irules waar deze datagroup aan naar verwijst
+
+                        for irule_from_db_app in Irule.objects.filter(datagroup__full_name=datagroup_from_db_app.full_name,
+                                                                   bigip_name_id__exact=datagroup_from_db_app.bigip_name_id):
+
+                            print(datagroup_from_db_app.full_name + ' gevonden voor ' + irule_from_db_app.full_name)
+
+                            # op zoek naar virtual servers waar deze irule naar verwijst
+
+                            for vs_from_db_app in VirtualServer.objects.filter(irule__full_name=irule_from_db_app.full_name,
+                                                                               bigip_name_id__exact=irule_from_db_app.bigip_name_id):
+
+                                print(irule_from_db_app.full_name + ' gevonden voor virtual server ' + vs_from_db_app.full_name)
+
+                                # voeg een nieuwe certificaatregel toe per virtual server
+                                # in de CertServerSSLVirtualServerViaIruleAndDatagroup tabel
+                                # cert_name = cert_from_db_app.full_name,
+                                # cert_partition = cert_from_db_app.partition,
+                                # cert_expiration = cert_from_db_app.expiration,
+                                # cert_cluster = BigIPNodes.objects.get(pk=cert_from_db_app.bigip_name_id),
+                                # server_ssl_name = server_ssl_from_db_app.full_name,
+                                # server_ssl_partition = server_ssl_from_db_app.partition,
+                                # irule_name =
+                                # datagroup_name =
+                                # vs_name = vs_from_db_app.full_name,
+                                # vs_partition = vs_from_db_app.partition,
+                                # vs_ip = vs_from_db_app.destination)
+
+                                cert_irule_virtualserver = CertServerSSLVirtualServerViaIruleAndDatagroup(
+                                    cert_name=cert_from_db_app.full_name,
+                                    cert_partition=cert_from_db_app.partition,
+                                    cert_expiration=cert_from_db_app.expiration,
+                                    cert_cluster=BigIPNodes.objects.get(pk=cert_from_db_app.bigip_name_id),
+                                    server_ssl_name=server_ssl_from_db_app.full_name,
+                                    server_ssl_partition=server_ssl_from_db_app.partition,
+                                    irule_name=irule_from_db_app.full_name,
+                                    datagroup_name =datagroup_from_db_app.full_name,
+                                    vs_name=vs_from_db_app.full_name,
+                                    vs_partition=vs_from_db_app.partition,
+                                    vs_ip=vs_from_db_app.destination)
+
+                                cert_irule_virtualserver.save()
+
+
             else:
                 continue
 
 
         context = {"cert_clientssl_virtualserver": CertClientSSLVirtualServer.objects.all(),
-                   'cert_serverssl_virtualserver': CertServerSSLVirtualServer.objects.all()}
+                   'cert_serverssl_virtualserver': CertServerSSLVirtualServer.objects.all(),
+                   'cert_serverssl_datagroup_irule_virtualserver': CertServerSSLVirtualServerViaIruleAndDatagroup.objects.all()}
 
 
     return render(request, 'certificates/certificates.html', context)

@@ -14,6 +14,7 @@ class Command(BaseCommand):
         mail_body_certs_30dgn = ''
         mail_body_bigip_nodes = ''
         mail_body_certs_serverssl_30dgn = ''
+        mail_body_certs_irule_datagroup_30dgn = ''
         counter = 0
 
         for cert_client_ssl in CertClientSSLVirtualServer.objects.all():
@@ -54,6 +55,25 @@ class Command(BaseCommand):
             else:
                 continue
 
+        for cert_server_ssl_irule_datagroup in CertServerSSLVirtualServerViaIruleAndDatagroup.objects.all():
+            self.stdout.write(cert_server_ssl_irule_datagroup.cert_name)
+
+            # test of het certificaat van de virtual server niet al verlopen is en of de verloopdatum niet meer dan een maand later is
+            if datetime.date.today() < cert_server_ssl_irule_datagroup.cert_expiration.date() \
+                    and (cert_server_ssl_irule_datagroup.cert_expiration.date() - datetime.date.today() < datetime.timedelta(days=400)):
+
+                mail_body_certs_irule_datagroup_30dgn += '\n' \
+                                         + 'virtual server: ' + cert_server_ssl_irule_datagroup.vs_name \
+                                         + ', op luipaardcluster: ' + cert_server_ssl_irule_datagroup.cert_cluster \
+                                         + ', in partition: ' + cert_server_ssl_irule_datagroup.vs_partition \
+                                         + ', met ssl server profile: ' + cert_server_ssl_irule_datagroup.server_ssl_name \
+                                         + ', en certificaat: ' + cert_server_ssl_irule_datagroup.cert_name \
+                                         + ', verloopt op: ' + str(cert_server_ssl_irule_datagroup.cert_expiration.date().strftime("%d %b %Y %H:%M:%S")) \
+                                         + '\n'
+
+            else:
+                continue
+
         #overzicht van de clusters waarvoor het certificaatoverzicht is gemaakt.
 
         for node in Database.objects.all().select_related():
@@ -64,7 +84,9 @@ class Command(BaseCommand):
 
         mail_body = "Hoi AS&D team," \
                     + '\n \n' \
-                    + "Dit geautomatiseerde bericht geeft een overzicht van certificaten (op basis van zowel client als server SSL profielen) welke de komende 30 dagen gaan verlopen. " \
+                    + "Dit geautomatiseerde bericht geeft een overzicht van certificaten (op basis van zowel client als server SSL profielen," \
+                      " ook voor de server SSL profielen welke gekoppeld zijn via de ClientAuthorization datagroups op de L104)" \
+                      " welke de komende 30 dagen gaan verlopen. " \
                     + "Het betreft certificaten op de clusters: "\
                     + '\n' + mail_body_bigip_nodes \
                     + '\n \n' \
@@ -72,9 +94,13 @@ class Command(BaseCommand):
                     + '\n ' \
                     + mail_body_certs_30dgn \
                     + '\n \n' \
-                    + "De volgende server SSL profile certificaten verlopen de komende 30 dagen: " \
+                    + "De volgende server SSL profile certificaten (directe vs koppeling) verlopen de komende 30 dagen: " \
                     + '\n ' \
                     + mail_body_certs_serverssl_30dgn \
+                    + '\n \n' \
+                    + "De volgende server SSL profile certificaten (gekoppeld via irule en datagroup) verlopen de komende 30 dagen: " \
+                    + '\n ' \
+                    + mail_body_certs_irule_datagroup_30dgn \
                     + '\n \n' \
                     + "Met vriendelijke groeten van de wi104366.ciman.nl" \
                     + '\n \n' \
