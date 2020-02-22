@@ -25,7 +25,7 @@ SECRET_KEY = 'gs-$ui9+g2=9p59oaw17vynzey(y)0&(gz^l2=8@n9037l(e5u'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
