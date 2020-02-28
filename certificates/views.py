@@ -15,7 +15,7 @@ def certificates(request):
 
     context = {}
 
-    if 'query_db_certs' in request.POST:
+    if 'update_cert_tables' in request.POST:
 
         ########### Database van de certificaten app eerst opschonen
 
@@ -175,6 +175,10 @@ def certificates(request):
             else:
                 continue
 
+        database = Database.objects.all()
+        context = {'database': database}
+
+    elif 'query_db_certs' in request.POST:
 
         context = {"cert_clientssl_virtualserver": CertClientSSLVirtualServer.objects.all(),
                    'cert_serverssl_virtualserver': CertServerSSLVirtualServer.objects.all(),

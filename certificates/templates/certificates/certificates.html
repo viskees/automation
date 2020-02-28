@@ -7,9 +7,31 @@
     <form action="{% url 'certificates:certificates' %}" method="POST">
 
         {% csrf_token %}
-        <input type="submit" name="query_db_certs" value="List Certificates in order of expiration">
+        <input type="submit" name="query_db_certs" value="List certificate tables in order of expiration">
+        <input type="submit" name="update_cert_tables" value="Update certificate tables">
 
     </form>
+
+{% if database %}
+
+    <p>Certificaattabellen zijn bijgewerkt naar deze versies:</p>
+
+    <p><table>
+        <tr>
+            <th>F5 node</th>
+            <th>Tables updated</th>
+        </tr>
+
+        {% for bigip_node in database %}
+            <tr>
+                <td>{{ bigip_node.bigip_name }}</td>
+                <td>{{ bigip_node.created_on }}</td>
+            </tr>
+        {% endfor %}
+
+    </table></p>
+
+{% endif %}
 
 {% if cert_clientssl_virtualserver %}
 
