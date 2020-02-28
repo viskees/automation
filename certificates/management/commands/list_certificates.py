@@ -15,14 +15,13 @@ class Command(BaseCommand):
         mail_body_bigip_nodes = ''
         mail_body_certs_serverssl_30dgn = ''
         mail_body_certs_irule_datagroup_30dgn = ''
-        counter = 0
 
         for cert_client_ssl in CertClientSSLVirtualServer.objects.all():
-            self.stdout.write(cert_client_ssl.cert_name)
+            #self.stdout.write(cert_client_ssl.cert_name)
 
             # test of het certificaat van de virtual server niet al verlopen is en of de verloopdatum niet meer dan een maand later is
             if datetime.date.today() < cert_client_ssl.cert_expiration.date() \
-                    and (cert_client_ssl.cert_expiration.date() - datetime.date.today() < datetime.timedelta(days=400)):
+                    and (cert_client_ssl.cert_expiration.date() - datetime.date.today() < datetime.timedelta(days=30)):
 
                 mail_body_certs_30dgn += '\n' \
                                          + 'virtual server: ' + cert_client_ssl.vs_name \
@@ -37,11 +36,11 @@ class Command(BaseCommand):
                 continue
 
         for cert_server_ssl in CertServerSSLVirtualServer.objects.all():
-            self.stdout.write(cert_server_ssl.cert_name)
+            #self.stdout.write(cert_server_ssl.cert_name)
 
             # test of het certificaat van de virtual server niet al verlopen is en of de verloopdatum niet meer dan een maand later is
             if datetime.date.today() < cert_server_ssl.cert_expiration.date() \
-                    and (cert_server_ssl.cert_expiration.date() - datetime.date.today() < datetime.timedelta(days=400)):
+                    and (cert_server_ssl.cert_expiration.date() - datetime.date.today() < datetime.timedelta(days=30)):
 
                 mail_body_certs_serverssl_30dgn += '\n' \
                                          + 'virtual server: ' + cert_server_ssl.vs_name \
@@ -56,11 +55,11 @@ class Command(BaseCommand):
                 continue
 
         for cert_server_ssl_irule_datagroup in CertServerSSLVirtualServerViaIruleAndDatagroup.objects.all():
-            self.stdout.write(cert_server_ssl_irule_datagroup.cert_name)
+            #self.stdout.write(cert_server_ssl_irule_datagroup.cert_name)
 
             # test of het certificaat van de virtual server niet al verlopen is en of de verloopdatum niet meer dan een maand later is
             if datetime.date.today() < cert_server_ssl_irule_datagroup.cert_expiration.date() \
-                    and (cert_server_ssl_irule_datagroup.cert_expiration.date() - datetime.date.today() < datetime.timedelta(days=400)):
+                    and (cert_server_ssl_irule_datagroup.cert_expiration.date() - datetime.date.today() < datetime.timedelta(days=30)):
 
                 mail_body_certs_irule_datagroup_30dgn += '\n' \
                                          + 'virtual server: ' + cert_server_ssl_irule_datagroup.vs_name \
@@ -109,6 +108,6 @@ class Command(BaseCommand):
 
         mail_subject = 'AS&D certificaatverloopdata - volgende update volgt op: ' + str(mail_subject_date)
 
-        print(mail_body)
+        #print(mail_body)
 
-        #send_mail(mail_subject, mail_body, 'mailadres')
+        #send_mail(mail_subject, mail_body, 'mailadres@example.com')
