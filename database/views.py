@@ -17,13 +17,14 @@ def database(request):
     # voor het weergeven van datetimestamp
     bigip_node_list = BigIPNodes.objects.all()
     database = Database.objects.all()
-    context = {'bigip_node_list': bigip_node_list, 'database':database}
+    context = {'bigip_node_list': bigip_node_list, 'database': database}
 
     if 'update_db' in request.POST:
 
         ########### Database eerst opschonen
 
-        print("Database tabellen opschonen van " + BigIPNodes.objects.get(bigip_ip__exact=request.POST['bigip_ip']).bigip_name)
+        print("Database tabellen opschonen van " + BigIPNodes.objects.get(
+            bigip_ip__exact=request.POST['bigip_ip']).bigip_name)
 
         # omdat er geen timestamp beschikbaar is van de laatste configwijziging binnen het F5 cluster
         # kan er niet worden bepaald of bepaalde tabellen moeten worden bijgewerkt.
@@ -108,13 +109,13 @@ def database(request):
         virtual_servers = requests.get(url, headers=headers, verify=False)
         virtual_servers_list_dict = virtual_servers.json()['items']
 
-
         ########### Database bijwerken
 
-        #update op basis van deze queryset
+        # update op basis van deze queryset
         BigIPNode = BigIPNodes.objects.get(bigip_ip=bigip_ip)
 
-        print("Database tabellen vullen voor " + BigIPNodes.objects.get(bigip_ip__exact=request.POST['bigip_ip']).bigip_name)
+        print("Database tabellen vullen voor " + BigIPNodes.objects.get(
+            bigip_ip__exact=request.POST['bigip_ip']).bigip_name)
 
         ##template
         #
@@ -123,17 +124,12 @@ def database(request):
         for datagroup_dict in datagroups_list_dict:
             # print(datagroup_dict)
 
-            
             slash, cert_partition, cert_name = cert_dict['name'].split("/")
-
             print("Datagrouptabel " + cert_dict['name'])
-
             print(datagroup_dict['name'])
-
             BigIPNode.datagroup_set.create(bigip_name=BigIPNodes.objects.get(bigip_ip=bigip_ip),
-                                              
-                                              )
 
+                                              )
             new_datagroups.append(datagroup_dict['name'])
         '''
 
@@ -141,8 +137,10 @@ def database(request):
         new_datagroups = []
 
         # de volgende datagroups verwijzen naar een server SSL profile;
-        datagroup_to_be_queried = ['clientAuthorisationDataGroup', 'webservices-outgoingClientAuthorisationDataGroup',
-                                   'ProdClientAuthorisationDataGroup']
+        datagroup_to_be_queried = ['clientAuthorisationDataGroup',
+                                   'webservices-outgoingClientAuthorisationDataGroup',
+                                   'ProdClientAuthorisationDataGroup',
+                                   'dg_ilt-integratie-outbound-clientAuthorisation']
 
         for datagroup_dict in datagroups_list_dict:
 
@@ -152,7 +150,6 @@ def database(request):
 
                 # doorzoek de huidige datagroup op server ssl profiles
                 for datagroup_record in datagroup_dict['records']:
-
                     datagroup_profile_server_ssl_list.append(datagroup_record['data'])
 
             # datagroup_profile_server_ssl_list to string
@@ -170,11 +167,11 @@ def database(request):
             print("Datagrouptabel " + datagroup_dict['name'])
 
             BigIPNode.datagroup_set.create(bigip_name=BigIPNodes.objects.get(bigip_ip=bigip_ip),
-                                               full_name=datagroup_dict['fullPath'],
-                                               name=datagroup_dict['name'],
-                                               partition=datagroup_dict['partition'],
-                                               datagroup_profile_server_ssl=datagroup_profile_server_ssl
-                                               )
+                                           full_name=datagroup_dict['fullPath'],
+                                           name=datagroup_dict['name'],
+                                           partition=datagroup_dict['partition'],
+                                           datagroup_profile_server_ssl=datagroup_profile_server_ssl
+                                           )
 
             new_datagroups.append(datagroup_dict['name'])
 
@@ -194,16 +191,19 @@ def database(request):
             # check irule for datagroups content obv de datagroup tabel
             irule_datagroups_names_list = []
 
-            for datagroup in Datagroup.objects.filter(Q(partition__exact=irule_dict['partition']) | Q(partition__exact='Common'),
-                                                      bigip_name_id__exact=BigIPNodes.objects.get(bigip_ip=bigip_ip).id):
+            for datagroup in Datagroup.objects.filter(
+                    Q(partition__exact=irule_dict['partition']) | Q(partition__exact='Common'),
+                    bigip_name_id__exact=BigIPNodes.objects.get(bigip_ip=bigip_ip).id):
 
                 print(irule_dict['fullPath'] + " wordt nu doorzocht op aanwezigheid van datagroup " + datagroup.name)
 
-                if datagroup.name in irule_dict['apiAnonymous']:
+                # test of de irule data bevat of leeg is
+                if 'apiAnonymous' in irule_dict:
 
-                    print('Datagroup ' + datagroup.name + ' gevonden in irule: ' + irule_dict['fullPath'])
+                    if datagroup.name in irule_dict['apiAnonymous']:
+                        print('Datagroup ' + datagroup.name + ' gevonden in irule: ' + irule_dict['fullPath'])
 
-                    irule_datagroups_names_list.append(datagroup.full_name)
+                        irule_datagroups_names_list.append(datagroup.full_name)
 
             print("Iruletabel " + irule_dict['name'])
 
@@ -212,10 +212,10 @@ def database(request):
             irule_datagroups_names = ','.join(irule_datagroups_names_list)
 
             BigIPNode.irule_set.create(bigip_name=BigIPNodes.objects.get(bigip_ip=bigip_ip),
-                                       full_name = irule_dict['fullPath'],
-                                       partition = irule_dict['partition'],
-                                       #irule_content = irule_dict['apiAnonymous'],
-                                       datagroups = irule_datagroups_names
+                                       full_name=irule_dict['fullPath'],
+                                       partition=irule_dict['partition'],
+                                       irule_content = irule_dict['apiAnonymous'],
+                                       datagroups=irule_datagroups_names
                                        )
 
             new_irules.append(irule_dict['name'])
@@ -233,7 +233,6 @@ def database(request):
             # profiles = profiles_dict['name']
             # irules = virtual_servers_dict['rules']
 
-
             # virtual server profielen toevoegen
             # profile reference dictionary aanmaken
             profile_reference = virtual_servers_dict.get('profilesReference')
@@ -244,7 +243,7 @@ def database(request):
             profiles = requests.get(profile_link_bigip_ip, headers=headers, verify=False)
             profiles_list_dict = profiles.json()['items']
 
-            #profiles list to string
+            # profiles list to string
             profile_names_list = []
 
             for profiles_dict in profiles_list_dict:
@@ -252,12 +251,16 @@ def database(request):
 
             profile_names = ','.join(profile_names_list)
 
-            # irule list to string
+            # irule list
             irule_names_list = []
+            # eerst testen of er wel irules zijn gekoppeld
 
-            for irule in virtual_servers_dict['rules']:
-                irule_names_list.append(irule)
+            if 'rules' in virtual_servers_dict:
 
+                for irule in virtual_servers_dict['rules']:
+                    irule_names_list.append(irule)
+
+            # irule list to string
             irule_names = ','.join(irule_names_list)
 
             print("Virtual server tabel " + virtual_servers_dict['name'])
@@ -272,50 +275,51 @@ def database(request):
 
             new_virtual_server.append(virtual_servers_dict['name'])
 
-
         # certificaattabel
         new_certs = []
         for cert_dict in certs_list_dict:
+            # print(cert_dict)
 
-            #print(cert_dict)
-
-            #bigip_name = BigIPNodes.objects.get(bigip_ip=bigip_ip)
-            #name = cert_name form cert_dict['name'].split("/")
-            #full_name = cert_dict['name']
-            #partition = cert_partition cert_dict['name'].split("/")
-            #expiration = cert_dict['apiRawValues']['expiration']
-            #commonName = cert_dict['commonName']
-            #certificateKeySize = cert_dict['apiRawValues']['certificateKeySize']
-            #publicKeyType = cert_dict['apiRawValues']['publicKeyType']
-            #organization = cert_dict['commonName']
-            #ou = cert_dict['ou']
-            #city = cert_dict['city']
-            #country = cert_dict['country']
-            #state = cert_dict['state']
-            #subjectAlternativeName = cert_dict['subjectAlternativeName']
+            # bigip_name = BigIPNodes.objects.get(bigip_ip=bigip_ip)
+            # name = cert_name form cert_dict['name'].split("/")
+            # full_name = cert_dict['name']
+            # partition = cert_partition cert_dict['name'].split("/")
+            # expiration = cert_dict['apiRawValues']['expiration']
+            # commonName = cert_dict['commonName']
+            # certificateKeySize = cert_dict['apiRawValues']['certificateKeySize']
+            # publicKeyType = cert_dict['apiRawValues']['publicKeyType']
+            # organization = cert_dict['commonName']
+            # ou = cert_dict['ou']
+            # city = cert_dict['city']
+            # country = cert_dict['country']
+            # state = cert_dict['state']
+            # subjectAlternativeName = cert_dict['subjectAlternativeName']
 
             slash, cert_partition, cert_name = cert_dict['name'].split("/")
 
             print("Certificatentabel " + cert_dict['name'])
 
-            #print(cert_dict['name'])
+            # print(cert_dict['name'])
 
-            BigIPNode.certificates_set.create(bigip_name = BigIPNodes.objects.get(bigip_ip=bigip_ip),
+            BigIPNode.certificates_set.create(bigip_name=BigIPNodes.objects.get(bigip_ip=bigip_ip),
                                               name=cert_name,
                                               full_name=cert_dict['name'],
                                               partition=cert_partition,
                                               expiration=datetime.strptime(cert_dict['apiRawValues']['expiration'],
                                                                            '%b %d %H:%M:%S %Y %Z'),
-                                              commonName = cert_dict['commonName'] if 'commonName' in cert_dict.keys() else'',
-                                              certificateKeySize = cert_dict['apiRawValues']['certificateKeySize'],
-                                              publicKeyType = cert_dict['apiRawValues']['publicKeyType'],
-                                              organization = cert_dict['organization'] if 'organization' in cert_dict.keys() else '',
-                                              ou = cert_dict['ou'] if 'ou' in cert_dict.keys() else '',
-                                              city = cert_dict['city'] if 'city' in cert_dict.keys() else '',
-                                              country = cert_dict['country'] if 'country' in cert_dict.keys() else '',
-                                              state = cert_dict['state'] if 'state' in cert_dict.keys() else '',
-                                              subjectAlternativeName=cert_dict['subjectAlternativeName'] if 'subjectAlternativeName' in cert_dict.keys() else ''
-                                                  )
+                                              commonName=cert_dict[
+                                                  'commonName'] if 'commonName' in cert_dict.keys() else '',
+                                              certificateKeySize=cert_dict['apiRawValues']['certificateKeySize'],
+                                              publicKeyType=cert_dict['apiRawValues']['publicKeyType'],
+                                              organization=cert_dict[
+                                                  'organization'] if 'organization' in cert_dict.keys() else '',
+                                              ou=cert_dict['ou'] if 'ou' in cert_dict.keys() else '',
+                                              city=cert_dict['city'] if 'city' in cert_dict.keys() else '',
+                                              country=cert_dict['country'] if 'country' in cert_dict.keys() else '',
+                                              state=cert_dict['state'] if 'state' in cert_dict.keys() else '',
+                                              subjectAlternativeName=cert_dict[
+                                                  'subjectAlternativeName'] if 'subjectAlternativeName' in cert_dict.keys() else ''
+                                              )
 
             new_certs.append(cert_dict['name'])
 
@@ -334,11 +338,10 @@ def database(request):
             cert_names_list = []
 
             for certkeychain_dict in certkeychain_list_dict:
-
-                #print(certkeychain_dict['cert'])
+                # print(certkeychain_dict['cert'])
                 cert_names_list.append(certkeychain_dict['cert'])
 
-                #list to string
+                # list to string
                 cert_names = ','.join(cert_names_list)
 
             print("Client SSL profile " + profile_cssl_dict['fullPath'])
@@ -360,39 +363,39 @@ def database(request):
             # partition = profile_server_ssl_dict['partition']
             # name = profile_server_ssl_dict['name']
 
-            #print('SSL server profile name: ' + profile_server_ssl_dict.get('fullPath'))
-            #print('SSL server profile cert name: ' + profile_server_ssl_dict.get('cert'))
-            #print('BigIP id: ' + str(BigIPNodes.objects.get(bigip_ip=bigip_ip).id))
-
+            # print('SSL server profile name: ' + profile_server_ssl_dict.get('fullPath'))
+            # print('SSL server profile cert name: ' + profile_server_ssl_dict.get('cert'))
+            # print('BigIP id: ' + str(BigIPNodes.objects.get(bigip_ip=bigip_ip).id))
 
             if profile_server_ssl_dict.get('cert') != 'none':
-                cert_ssl_server_profile = Certificates.objects.all().filter(full_name__exact=profile_server_ssl_dict.get('cert'),
-                                                                                     bigip_name_id__exact=BigIPNodes.objects.get(bigip_ip=bigip_ip).id)
+                cert_ssl_server_profile = Certificates.objects.all().filter(
+                    full_name__exact=profile_server_ssl_dict.get('cert'),
+                    bigip_name_id__exact=BigIPNodes.objects.get(bigip_ip=bigip_ip).id)
 
                 certificate_id = cert_ssl_server_profile[0].id
-                #print('bijbehorende certificate ID op basis van filter query: ' + str(cert_ssl_server_profile[0].id))
+                # print('bijbehorende certificate ID op basis van filter query: ' + str(cert_ssl_server_profile[0].id))
 
             else:
                 certificate_id = ''
 
-            #print('bijbehorende certificate ID op basis GET query' + str(Certificates.objects.get(full_name__exact=profile_server_ssl_dict.get('cert'),
+            # print('bijbehorende certificate ID op basis GET query' + str(Certificates.objects.get(full_name__exact=profile_server_ssl_dict.get('cert'),
             #                                                                              bigip_name_id__exact=BigIPNodes.objects.get(bigip_ip=bigip_ip).id).id if 'cert' in profile_server_ssl_dict.get('cert')!= 'none' else '',))
 
             print("Server SSL profile " + profile_server_ssl_dict['fullPath'])
 
             BigIPNode.profilesslserver_set.create(full_name=profile_server_ssl_dict['fullPath'],
-                                                  certificate_id = certificate_id,
-                                                  #certificate_id=Certificates.objects.get(full_name__exact=profile_server_ssl_dict.get('cert'),
+                                                  certificate_id=certificate_id,
+                                                  # certificate_id=Certificates.objects.get(full_name__exact=profile_server_ssl_dict.get('cert'),
                                                   #                                        bigip_name_id__exact=BigIPNodes.objects.get(bigip_ip=bigip_ip).id).id if 'cert' in profile_server_ssl_dict.get('cert')!= 'none' else '',
                                                   partition=profile_server_ssl_dict['partition'],
                                                   name=profile_server_ssl_dict['name'])
 
             new_profile_ssl_server.append(profile_server_ssl_dict['name'])
 
-
         ########### Tabellen koppelen
 
-        print("Database tabellen koppelen voor " + BigIPNodes.objects.get(bigip_ip__exact=request.POST['bigip_ip']).bigip_name)
+        print("Database tabellen koppelen voor " + BigIPNodes.objects.get(
+            bigip_ip__exact=request.POST['bigip_ip']).bigip_name)
 
         # doorloop de client SSL profielen die horen bij deze bigip en leg de many-to-many relaties met de certificatentabel
         for profilesslclient in ProfileSSLClient.objects.filter(bigip_name_id__exact=bigip_node_id):
@@ -408,8 +411,8 @@ def database(request):
                 #  want dit is al opgenomen in de naam van de certlijst
 
                 Certificates_query_set = Certificates.objects.filter(Q(partition__exact=profilesslclient.partition)
-                                                                      | Q(partition__exact='Common'),
-                                                                      bigip_name_id__exact=profilesslclient.bigip_name_id)
+                                                                     | Q(partition__exact='Common'),
+                                                                     bigip_name_id__exact=profilesslclient.bigip_name_id)
 
                 # de gekoppelde certlijst doorlopen, opzoek naar een certificaat
                 for cert_profilesslclient in profilesslclient.cert_names.split(','):
@@ -431,6 +434,8 @@ def database(request):
 
         # doorloop alle virtual servers en onderliggende profielen en leg de many-to-many relaties
         for virtualserver in VirtualServer.objects.filter(bigip_name_id__exact=bigip_node_id):
+
+            print("virtualserver m2m relaties leggen voor virtual server " + virtualserver.full_name)
 
             if virtualserver.profiles == '':
 
@@ -460,7 +465,7 @@ def database(request):
 
                         if virtual_server_profile == client_ssl_profile.name:
 
-                            print('match gevonden --> m2m koppeltabel virtual server en client ssl profiel bijwerken')
+                            print('match gevonden --> m2m koppeltabel voor client ssl profiel ' + client_ssl_profile.name )
                             client_ssl_profile.virtualserver_set.add(virtualserver)
 
                             break
@@ -471,7 +476,7 @@ def database(request):
 
                         if virtual_server_profile == server_ssl_profile.name:
 
-                            print('match gevonden --> m2m koppeltabel virtual server en server ssl profiel bijwerken')
+                            print('match gevonden --> m2m koppeltabel voor server ssl profiel ' + server_ssl_profile.name )
                             server_ssl_profile.virtualserver_set.add(virtualserver)
 
                             break
@@ -486,23 +491,50 @@ def database(request):
             else:
 
                 # irule tabel query op basis van bigipname_id en partitie
-                irules_db_query = Irule.objects.filter(Q(partition__exact=virtualserver.partition) 
+                irules_db_query = Irule.objects.filter(Q(partition__exact=virtualserver.partition)
                                                        | Q(partition__exact='Common'),
                                                        bigip_name_id__exact=virtualserver.bigip_name_id)
 
                 # de gekoppelde profielenlijst doorlopen, opzoek naar een client- en/of server ssl profiel
                 for virtual_server_irule in virtualserver.irules.split(','):
 
-                    print("virtual server irule name: " + virtual_server_irule)
-
                     for irule in irules_db_query:
-
-                        print("irule: " + irule.full_name)
 
                         if virtual_server_irule == irule.full_name:
 
-                            print('match gevonden --> m2m koppeltabel virtual server en irule bijwerken')
+                            print('match gevonden --> m2m koppeltabel voor irule ' + irule.full_name )
                             irule.virtualserver_set.add(virtualserver)
+
+                            # uitzondering voor de volgende irules omdat hier nog datagroups aan gekoppeld moeten worden
+                            # waarbij de partitie van de datagroup gelijk is aan dit van de virtual server
+
+                            irule_exception_list = ['/Common/irule_webservices.dictu.nl_tls-proxy_outbound', '/Common/irule_ilt-integratie-outbound-tls-proxy']
+                            irule_exception_datagroups_names_list = []
+
+                            if irule.full_name in irule_exception_list:
+
+                                #doorzoek deze irule op de volgende datagroupen
+
+                                for datagroup in Datagroup.objects.filter(Q(partition__exact=virtualserver.partition)
+                                                       | Q(partition__exact='Common'),
+                                                                          bigip_name_id__exact=BigIPNodes.objects.get(bigip_ip=bigip_ip).id):
+
+                                    print("UITZONDERING!: " + irule.full_name
+                                          + " wordt nu doorzocht op aanwezigheid van datagroup " + datagroup.name)
+
+                                    if datagroup.name in irule.irule_content:
+                                        print('Datagroup ' + datagroup.name + ' gevonden in irule: ' + irule.full_name)
+
+                                        irule_exception_datagroups_names_list.append(datagroup.full_name)
+
+                                # datagroup list to string
+
+                                irule_exception_datagroups_names = ','.join(irule_exception_datagroups_names_list)
+
+                                # irule entry aanpassen (datagroups toevoegen)
+                                irule.datagroups += irule_exception_datagroups_names
+                                irule.save()
+
                             break
                         else:
                             continue
@@ -519,11 +551,15 @@ def database(request):
 
             else:
 
-            # datagroup tabel query op basis van bigipname_id en partitie
+                # datagroup tabel query op basis van bigipname_id en partitie
 
-                datagroup_db_query = Datagroup.objects.filter(Q(partition__exact=irule.partition)
-                                                           | Q(partition__exact='Common'),
-                                                           bigip_name_id__exact=irule.bigip_name_id)
+                #datagroup_db_query = Datagroup.objects.filter(Q(partition__exact=irule.partition)
+                #                                              | Q(partition__exact='Common'),
+                #                                              bigip_name_id__exact=irule.bigip_name_id)
+
+                # omdat er ook irules in de common partitie zijn opgenomen met datagroups uit andere partities
+                # moeten we alle datagroups doorlopen
+                datagroup_db_query = Datagroup.objects.all()
 
                 # de gekoppelde profielenlijst doorlopen, opzoek naar een client- en/of server ssl profiel
                 for irule_datagroup_name in irule.datagroups.split(','):
@@ -557,8 +593,8 @@ def database(request):
                 # profile server ssl tabel query op basis van bigipname_id en partitie
 
                 profile_ssl_server_query = ProfileSSLServer.objects.filter(Q(partition__exact=datagroup.partition)
-                                                                  | Q(partition__exact='Common'),
-                                                                  bigip_name_id__exact=datagroup.bigip_name_id)
+                                                                           | Q(partition__exact='Common'),
+                                                                           bigip_name_id__exact=datagroup.bigip_name_id)
 
                 # de gekoppelde profielenlijst doorlopen, opzoek naar een client- en/of server ssl profiel
                 for datagroup_profile_server_ssl_name in datagroup.datagroup_profile_server_ssl.split(','):
@@ -577,7 +613,6 @@ def database(request):
                         else:
                             continue
 
-
         # toegevoegde entries meegeven om weer te geven op de database.html pagina
         database_updates['datagroups'] = new_datagroups
         database_updates['irules'] = new_irules
@@ -587,9 +622,9 @@ def database(request):
         database_updates['virtual_servers'] = new_virtual_server
 
         # database tabel bijwerken zodat het duidelijk is van welke datum de huidige configuratie is
-        #bigip_name_id = BigIPNodes.objects.get(full_name__exact=).id
+        # bigip_name_id = BigIPNodes.objects.get(full_name__exact=).id
         BigIPNode.database_set.create()
 
-        context = {'database_updates' : database_updates}
+        context = {'database_updates': database_updates}
 
     return render(request, 'database/database.html', context)
