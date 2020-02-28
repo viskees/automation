@@ -16,7 +16,7 @@ class Command(BaseCommand):
 
         for node in BigIPNodes.objects.all():
 
-            #print('updating: ' + node.bigip_ip)
+            # print('updating: ' + node.bigip_ip)
 
             ########### Database eerst opschonen
 
@@ -63,7 +63,6 @@ class Command(BaseCommand):
 
             # data verwijderen - CertServerSSLVirtualServerViaIruleAndDatagroup tabel
             CertServerSSLVirtualServerViaIruleAndDatagroup.objects.all().delete()
-
 
             # nieuwe database entries opnemen in een dictionary voor weergave op de database.html pagina
             database_updates = {}
@@ -122,18 +121,11 @@ class Command(BaseCommand):
             new_datagroups = []
             for datagroup_dict in datagroups_list_dict:
                 # print(datagroup_dict)
-
-
                 slash, cert_partition, cert_name = cert_dict['name'].split("/")
-
                 print("Datagrouptabel " + cert_dict['name'])
-
                 print(datagroup_dict['name'])
-
                 BigIPNode.datagroup_set.create(bigip_name=BigIPNodes.objects.get(bigip_ip=bigip_ip),
-
                                                   )
-
                 new_datagroups.append(datagroup_dict['name'])
             '''
 
@@ -143,7 +135,8 @@ class Command(BaseCommand):
             # de volgende datagroups verwijzen naar een server SSL profile;
             datagroup_to_be_queried = ['clientAuthorisationDataGroup',
                                        'webservices-outgoingClientAuthorisationDataGroup',
-                                       'ProdClientAuthorisationDataGroup']
+                                       'ProdClientAuthorisationDataGroup',
+                                       'dg_ilt-integratie-outbound-clientAuthorisation']
 
             for datagroup_dict in datagroups_list_dict:
 
@@ -198,13 +191,15 @@ class Command(BaseCommand):
                         Q(partition__exact=irule_dict['partition']) | Q(partition__exact='Common'),
                         bigip_name_id__exact=BigIPNodes.objects.get(bigip_ip=bigip_ip).id):
 
-                    print(
-                        irule_dict['fullPath'] + " wordt nu doorzocht op aanwezigheid van datagroup " + datagroup.name)
+                    print(irule_dict['fullPath'] + " wordt nu doorzocht op aanwezigheid van datagroup " + datagroup.name)
 
-                    if datagroup.name in irule_dict['apiAnonymous']:
-                        print('Datagroup ' + datagroup.name + ' gevonden in irule: ' + irule_dict['fullPath'])
+                    # test of de irule data bevat of leeg is
+                    if 'apiAnonymous' in irule_dict:
 
-                        irule_datagroups_names_list.append(datagroup.full_name)
+                        if datagroup.name in irule_dict['apiAnonymous']:
+                            print('Datagroup ' + datagroup.name + ' gevonden in irule: ' + irule_dict['fullPath'])
+
+                            irule_datagroups_names_list.append(datagroup.full_name)
 
                 print("Iruletabel " + irule_dict['name'])
 
@@ -215,7 +210,7 @@ class Command(BaseCommand):
                 BigIPNode.irule_set.create(bigip_name=BigIPNodes.objects.get(bigip_ip=bigip_ip),
                                            full_name=irule_dict['fullPath'],
                                            partition=irule_dict['partition'],
-                                           # irule_content = irule_dict['apiAnonymous'],
+                                           irule_content = irule_dict['apiAnonymous'],
                                            datagroups=irule_datagroups_names
                                            )
 
@@ -252,16 +247,17 @@ class Command(BaseCommand):
 
                 profile_names = ','.join(profile_names_list)
 
-                # irule list to string
+                # irule list
+                irule_names_list = []
                 # eerst testen of er wel irules zijn gekoppeld
 
                 if 'rules' in virtual_servers_dict:
-                    irule_names_list = []
 
                     for irule in virtual_servers_dict['rules']:
                         irule_names_list.append(irule)
 
-                    irule_names = ','.join(irule_names_list)
+                # irule list to string
+                irule_names = ','.join(irule_names_list)
 
                 print("Virtual server tabel " + virtual_servers_dict['name'])
 
@@ -460,8 +456,7 @@ class Command(BaseCommand):
 
                             if virtual_server_profile == client_ssl_profile.name:
 
-                                print(
-                                    'match gevonden --> m2m koppeltabel virtual server en client ssl profiel bijwerken')
+                                print('match gevonden --> m2m koppeltabel voor client ssl profiel ' + client_ssl_profile.name )
                                 client_ssl_profile.virtualserver_set.add(virtualserver)
 
                                 break
@@ -472,8 +467,7 @@ class Command(BaseCommand):
 
                             if virtual_server_profile == server_ssl_profile.name:
 
-                                print(
-                                    'match gevonden --> m2m koppeltabel virtual server en server ssl profiel bijwerken')
+                                print('match gevonden --> m2m koppeltabel voor server ssl profiel ' + server_ssl_profile.name )
                                 server_ssl_profile.virtualserver_set.add(virtualserver)
 
                                 break
@@ -495,16 +489,43 @@ class Command(BaseCommand):
                     # de gekoppelde profielenlijst doorlopen, opzoek naar een client- en/of server ssl profiel
                     for virtual_server_irule in virtualserver.irules.split(','):
 
-                        print("virtual server irule name: " + virtual_server_irule)
-
                         for irule in irules_db_query:
-
-                            print("irule: " + irule.full_name)
 
                             if virtual_server_irule == irule.full_name:
 
-                                print('match gevonden --> m2m koppeltabel virtual server en irule bijwerken')
+                                print('match gevonden --> m2m koppeltabel voor irule ' + irule.full_name )
                                 irule.virtualserver_set.add(virtualserver)
+
+                                # uitzondering voor de volgende irules omdat hier nog datagroups aan gekoppeld moeten worden
+                                # waarbij de partitie van de datagroup gelijk is aan dit van de virtual server
+
+                                irule_exception_list = ['/Common/irule_webservices.dictu.nl_tls-proxy_outbound']
+                                irule_exception_datagroups_names_list = []
+
+                                if irule.full_name in irule_exception_list:
+
+                                    # doorzoek deze irule op de volgende datagroupen
+
+                                    for datagroup in Datagroup.objects.filter(Q(partition__exact=virtualserver.partition)
+                                            | Q(partition__exact='Common'),
+                                            bigip_name_id__exact=BigIPNodes.objects.get(bigip_ip=bigip_ip).id):
+
+                                        print("UITZONDERING!: " + irule.full_name
+                                              + " wordt nu doorzocht op aanwezigheid van datagroup " + datagroup.name)
+
+                                        if datagroup.name in irule.irule_content:
+                                            print('Datagroup ' + datagroup.name + ' gevonden in irule: ' + irule.full_name)
+
+                                            irule_exception_datagroups_names_list.append(datagroup.full_name)
+
+                                    # datagroup list to string
+
+                                    irule_exception_datagroups_names = ','.join(irule_exception_datagroups_names_list)
+
+                                    # irule entry aanpassen (datagroups toevoegen)
+                                    irule.datagroups += irule_exception_datagroups_names
+                                    irule.save()
+
                                 break
                             else:
                                 continue
@@ -523,9 +544,13 @@ class Command(BaseCommand):
 
                     # datagroup tabel query op basis van bigipname_id en partitie
 
-                    datagroup_db_query = Datagroup.objects.filter(Q(partition__exact=irule.partition)
-                                                                  | Q(partition__exact='Common'),
-                                                                  bigip_name_id__exact=irule.bigip_name_id)
+                    #datagroup_db_query = Datagroup.objects.filter(Q(partition__exact=irule.partition)
+                    #                                              | Q(partition__exact='Common'),
+                    #                                              bigip_name_id__exact=irule.bigip_name_id)
+
+                    # omdat er ook irules in de common partitie zijn opgenomen met datagroups uit andere partities
+                    # moeten we alle datagroups doorlopen
+                    datagroup_db_query = Datagroup.objects.all()
 
                     # de gekoppelde profielenlijst doorlopen, opzoek naar een client- en/of server ssl profiel
                     for irule_datagroup_name in irule.datagroups.split(','):
@@ -578,7 +603,6 @@ class Command(BaseCommand):
                                 break
                             else:
                                 continue
-
 
             for cert_from_db_app in Certificates.objects.all():
 
