@@ -96,7 +96,7 @@ class Irule(models.Model):
     datagroup = models.ManyToManyField(Datagroup)
     full_name = models.CharField(max_length=200)
     partition = models.CharField(max_length=200)
-    # irule_content = models.TextField()
+    irule_content = models.TextField()
     datagroups = models.CharField(max_length=200)
 
     class Meta:
