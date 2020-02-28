@@ -210,7 +210,7 @@ class Command(BaseCommand):
                 BigIPNode.irule_set.create(bigip_name=BigIPNodes.objects.get(bigip_ip=bigip_ip),
                                            full_name=irule_dict['fullPath'],
                                            partition=irule_dict['partition'],
-                                           irule_content = irule_dict['apiAnonymous'],
+                                           irule_content = irule_dict['apiAnonymous'] if 'apiAnonymous' in irule_dict.keys() else '',
                                            datagroups=irule_datagroups_names
                                            )
 
