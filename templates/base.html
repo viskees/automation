@@ -1,24 +1,29 @@
 <!doctype html>
 <html>
+
+{% load static %}
+
 <head>
+    <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
     <title>Lets Automate :)</title>
-<style>
-    table, td, th {
-    border: 1px solid black;
-    }
 
-    table {
-    border-collapse: collapse;
-    }
+    <style>
+        p.ex1 {
+            padding-top: 30px;
+        }
+    </style>
 
-    th {
-    height: 50px;
-    }
-</style>
+</head>
+
 <body>
+    <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
     {% include "navbar.html" %}
 
+    <p class="ex1">
     {% block content_name %} Replace me in the other template.html files {% endblock %}
+    </p>
 </body>
 
 </html>
+
+<body>

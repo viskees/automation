@@ -1,156 +1,157 @@
 {% extends "base.html" %}
 
 {% block content_name %}
+<div class="container-fluid">
+    <h2>Certificates Page</h2>
 
-<h2>Certificates Page</h2>
+        <form action="{% url 'certificates:certificates' %}" method="POST">
 
-    <form action="{% url 'certificates:certificates' %}" method="POST">
+            {% csrf_token %}
+            <input type="submit" name="query_db_certs" value="List certificate tables in order of expiration">
+            <input type="submit" name="update_cert_tables" value="Update certificate tables">
 
-        {% csrf_token %}
-        <input type="submit" name="query_db_certs" value="List certificate tables in order of expiration">
-        <input type="submit" name="update_cert_tables" value="Update certificate tables">
+        </form>
 
-    </form>
+    {% if database %}
 
-{% if database %}
+        <p>Certificaattabellen zijn bijgewerkt naar deze versies:</p>
 
-    <p>Certificaattabellen zijn bijgewerkt naar deze versies:</p>
-
-    <p><table>
-        <tr>
-            <th>F5 node</th>
-            <th>Tables updated</th>
-        </tr>
-
-        {% for bigip_node in database %}
+        <p><table>
             <tr>
-                <td>{{ bigip_node.bigip_name }}</td>
-                <td>{{ bigip_node.created_on }}</td>
+                <th>F5 node</th>
+                <th>Tables updated</th>
             </tr>
-        {% endfor %}
 
-    </table></p>
+            {% for bigip_node in database %}
+                <tr>
+                    <td>{{ bigip_node.bigip_name }}</td>
+                    <td>{{ bigip_node.created_on }}</td>
+                </tr>
+            {% endfor %}
 
-{% endif %}
+        </table></p>
 
-{% if cert_clientssl_virtualserver %}
+    {% endif %}
 
-    <p>Certificaten op basis van Client SSL profielen:</p>
+    {% if cert_clientssl_virtualserver %}
 
-    <p><table>
+        <p>Certificaten op basis van Client SSL profielen:</p>
 
-        <tr>
-            <th>Cert Name</th>
-            <th>Cert Partition</th>
-            <th>Cert Expiration</th>
-            <th>Cert Cluster</th>
-            <th>CSSL Profile Name</th>
-            <th>CSSL Partition</th>
-            <th>Virtual Server Name</th>
-            <th>Virtual Server Partition</th>
-            <th>Virtual Server Destination</th>
-        </tr>
-
-        {% for server_cert in cert_clientssl_virtualserver %}
+        <p><table>
 
             <tr>
-                <td>{{ server_cert.cert_name }}</td>
-                <td>{{ server_cert.cert_partition }}</td>
-                <td>{{ server_cert.cert_expiration }}</td>
-                <td>{{ server_cert.cert_cluster }}</td>
-                <td>{{ server_cert.cssl_name }}</td>
-                <td>{{ server_cert.cssl_partition}}</td>
-                <td>{{ server_cert.vs_name }}</td>
-                <td>{{ server_cert.vs_partition }}</td>
-                <td>{{ server_cert.vs_ip }}</td>
-         </tr>
-        {% endfor %}
+                <th>Cert Name</th>
+                <th>Cert Partition</th>
+                <th>Cert Expiration</th>
+                <th>Cert Cluster</th>
+                <th>CSSL Profile Name</th>
+                <th>CSSL Partition</th>
+                <th>Virtual Server Name</th>
+                <th>Virtual Server Partition</th>
+                <th>Virtual Server Destination</th>
+            </tr>
+
+            {% for server_cert in cert_clientssl_virtualserver %}
+
+                <tr>
+                    <td>{{ server_cert.cert_name }}</td>
+                    <td>{{ server_cert.cert_partition }}</td>
+                    <td>{{ server_cert.cert_expiration }}</td>
+                    <td>{{ server_cert.cert_cluster }}</td>
+                    <td>{{ server_cert.cssl_name }}</td>
+                    <td>{{ server_cert.cssl_partition}}</td>
+                    <td>{{ server_cert.vs_name }}</td>
+                    <td>{{ server_cert.vs_partition }}</td>
+                    <td>{{ server_cert.vs_ip }}</td>
+             </tr>
+            {% endfor %}
 
 
-    </table></p></p>
+        </table></p></p>
 
-{% endif %}
+    {% endif %}
 
-{% if cert_serverssl_virtualserver %}
+    {% if cert_serverssl_virtualserver %}
 
-    <p>Certificaten op basis van Server SSL profielen:</p>
+        <p>Certificaten op basis van Server SSL profielen:</p>
 
-    <p><table>
-
-        <tr>
-            <th>Cert Name</th>
-            <th>Cert Partition</th>
-            <th>Cert Expiration</th>
-            <th>Cert Cluster</th>
-            <th>Server SSL Profile Name</th>
-            <th>Server SSL Partition</th>
-            <th>Virtual Server Name</th>
-            <th>Virtual Server Partition</th>
-            <th>Virtual Server Destination</th>
-        </tr>
-
-        {% for client_cert in cert_serverssl_virtualserver %}
-
-            <tr>
-                <td>{{ client_cert.cert_name }}</td>
-                <td>{{ client_cert.cert_partition }}</td>
-                <td>{{ client_cert.cert_expiration }}</td>
-                <td>{{ client_cert.cert_cluster }}</td>
-                <td>{{ client_cert.server_ssl_name }}</td>
-                <td>{{ client_cert.server_ssl_partition}}</td>
-                <td>{{ client_cert.vs_name }}</td>
-                <td>{{ client_cert.vs_partition }}</td>
-                <td>{{ client_cert.vs_ip }}</td>
-         </tr>
-        {% endfor %}
-
-
-    </table></p>
-
-{% endif %}
-
-
-{% if cert_serverssl_datagroup_irule_virtualserver %}
-
-    <p>Certificaten op basis van Server SSL profielen, gekoppeld via irules en datagroups:</p>
-
-    <p><table>
-
-        <tr>
-            <th>Cert Name</th>
-            <th>Cert Partition</th>
-            <th>Cert Expiration</th>
-            <th>Cert Cluster</th>
-            <th>Server SSL Profile Name</th>
-            <th>Server SSL Partition</th>
-            <th>Datagroup</th>
-            <th>Irule</th>
-            <th>Virtual Server Name</th>
-            <th>Virtual Server Partition</th>
-            <th>Virtual Server Destination</th>
-        </tr>
-
-        {% for client_cert_datagroup_irule in cert_serverssl_datagroup_irule_virtualserver %}
+        <p><table>
 
             <tr>
-                <td>{{ client_cert_datagroup_irule.cert_name }}</td>
-                <td>{{ client_cert_datagroup_irule.cert_partition }}</td>
-                <td>{{ client_cert_datagroup_irule.cert_expiration }}</td>
-                <td>{{ client_cert_datagroup_irule.cert_cluster }}</td>
-                <td>{{ client_cert_datagroup_irule.server_ssl_name }}</td>
-                <td>{{ client_cert_datagroup_irule.server_ssl_partition}}</td>
-                <td>{{ client_cert_datagroup_irule.datagroup_name }}</td>
-                <td>{{ client_cert_datagroup_irule.irule_name }}</td>
-                <td>{{ client_cert_datagroup_irule.vs_name }}</td>
-                <td>{{ client_cert_datagroup_irule.vs_partition }}</td>
-                <td>{{ client_cert_datagroup_irule.vs_ip }}</td>
-         </tr>
-        {% endfor %}
+                <th>Cert Name</th>
+                <th>Cert Partition</th>
+                <th>Cert Expiration</th>
+                <th>Cert Cluster</th>
+                <th>Server SSL Profile Name</th>
+                <th>Server SSL Partition</th>
+                <th>Virtual Server Name</th>
+                <th>Virtual Server Partition</th>
+                <th>Virtual Server Destination</th>
+            </tr>
+
+            {% for client_cert in cert_serverssl_virtualserver %}
+
+                <tr>
+                    <td>{{ client_cert.cert_name }}</td>
+                    <td>{{ client_cert.cert_partition }}</td>
+                    <td>{{ client_cert.cert_expiration }}</td>
+                    <td>{{ client_cert.cert_cluster }}</td>
+                    <td>{{ client_cert.server_ssl_name }}</td>
+                    <td>{{ client_cert.server_ssl_partition}}</td>
+                    <td>{{ client_cert.vs_name }}</td>
+                    <td>{{ client_cert.vs_partition }}</td>
+                    <td>{{ client_cert.vs_ip }}</td>
+             </tr>
+            {% endfor %}
 
 
-    </table></p>
+        </table></p>
 
-{% endif %}
+    {% endif %}
+
+
+    {% if cert_serverssl_datagroup_irule_virtualserver %}
+
+        <p>Certificaten op basis van Server SSL profielen, gekoppeld via irules en datagroups:</p>
+
+        <p><table>
+
+            <tr>
+                <th>Cert Name</th>
+                <th>Cert Partition</th>
+                <th>Cert Expiration</th>
+                <th>Cert Cluster</th>
+                <th>Server SSL Profile Name</th>
+                <th>Server SSL Partition</th>
+                <th>Datagroup</th>
+                <th>Irule</th>
+                <th>Virtual Server Name</th>
+                <th>Virtual Server Partition</th>
+                <th>Virtual Server Destination</th>
+            </tr>
+
+            {% for client_cert_datagroup_irule in cert_serverssl_datagroup_irule_virtualserver %}
+
+                <tr>
+                    <td>{{ client_cert_datagroup_irule.cert_name }}</td>
+                    <td>{{ client_cert_datagroup_irule.cert_partition }}</td>
+                    <td>{{ client_cert_datagroup_irule.cert_expiration }}</td>
+                    <td>{{ client_cert_datagroup_irule.cert_cluster }}</td>
+                    <td>{{ client_cert_datagroup_irule.server_ssl_name }}</td>
+                    <td>{{ client_cert_datagroup_irule.server_ssl_partition}}</td>
+                    <td>{{ client_cert_datagroup_irule.datagroup_name }}</td>
+                    <td>{{ client_cert_datagroup_irule.irule_name }}</td>
+                    <td>{{ client_cert_datagroup_irule.vs_name }}</td>
+                    <td>{{ client_cert_datagroup_irule.vs_partition }}</td>
+                    <td>{{ client_cert_datagroup_irule.vs_ip }}</td>
+             </tr>
+            {% endfor %}
+
+
+        </table></p>
+
+    {% endif %}
+</div>
 
 
 {% endblock %}
