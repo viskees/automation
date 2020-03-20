@@ -4,6 +4,8 @@ from django.db import models
 
 class CertClientSSLVirtualServer(models.Model):
     cert_name  = models.CharField(max_length=200)
+    cert_common_name = models.CharField(max_length=200)
+    cert_san = models.TextField()
     cert_partition = models.CharField(max_length=200)
     cert_expiration = models.DateTimeField()
     cert_cluster = models.CharField(max_length=200)

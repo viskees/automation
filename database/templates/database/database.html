@@ -2,91 +2,94 @@
 
 {% block content_name %}
 
-<h2>Database Page</h2>
+<div class="container-fluid">
+    <h2>Databasepagina</h2>
 
-{% if bigip_node_list %}
-    <form action="{% url 'database:database' %}" method="POST">
-        {% csrf_token %}
-        <select name="bigip_ip">
+    {% if bigip_node_list %}
+        <form action="{% url 'database:database' %}" method="POST">
+            {% csrf_token %}
+            <select name="bigip_ip">
 
-            {% for node in bigip_node_list %}
+                {% for node in bigip_node_list %}
 
-                <option value="{{node.bigip_ip}}">{{node.bigip_name}}</option>
+                    <option value="{{node.bigip_ip}}">{{node.bigip_name}}</option>
 
-            {% endfor %}
-        </select>
-        <input type="submit" name="update_db" value="Update Database from F5 node">
-        </form><p>
+                {% endfor %}
+            </select>
+            <input type="submit" name="update_db" value="Update Database from F5 node">
+            </form><p>
 
-    <p><table>
-        <tr>
-            <th>F5 node</th>
-            <th>Tables updated</th>
-        </tr>
-
-        {% for bigip_node in database %}
+        <p><table>
             <tr>
-                <td>{{ bigip_node.bigip_name }}</td>
-                <td>{{ bigip_node.created_on }}</td>
+                <th>F5 node</th>
+                <th>Tables updated</th>
             </tr>
+
+            {% for bigip_node in database %}
+                <tr>
+                    <td>{{ bigip_node.bigip_name }}</td>
+                    <td>{{ bigip_node.created_on }}</td>
+                </tr>
+            {% endfor %}
+
+        </table></p>
+
+    {% elif database_updates %}
+
+        Deze database tabellen zijn bijgewerkt:<p>
+
+        <p>Irules:<p>
+
+        {% for irule in database_updates.irules %}
+
+            <li>{{ irule }}</li>
+
         {% endfor %}
 
-    </table></p>
+        <p>Datagroups:<p>
 
-{% elif database_updates %}
+        {% for datagroup in database_updates.datagroups %}
 
-    Deze database tabellen zijn bijgewerkt:<p>
+            <li>{{ datagroup }}</li>
 
-    <p>Irules:<p>
-
-    {% for irule in database_updates.irules %}
-
-        <li>{{ irule }}</li>
-
-    {% endfor %}
-
-    <p>Datagroups:<p>
-
-    {% for datagroup in database_updates.datagroups %}
-
-        <li>{{ datagroup }}</li>
-
-    {% endfor %}
+        {% endfor %}
 
 
-    <p>Certificaten:<p>
+        <p>Certificaten:<p>
 
-    {% for certificate in database_updates.certificates %}
+        {% for certificate in database_updates.certificates %}
 
-        <li>{{ certificate }}</li>
+            <li>{{ certificate }}</li>
 
-    {% endfor %}
+        {% endfor %}
 
-    <p>Client SSL Profile:<p>
+        <p>Client SSL Profile:<p>
 
-    {% for cssl_profile in database_updates.profile_cssl %}
+        {% for cssl_profile in database_updates.profile_cssl %}
 
-        <li>{{ cssl_profile }}</li>
+            <li>{{ cssl_profile }}</li>
 
-    {% endfor %}
+        {% endfor %}
 
-    <p>Server SSL Profile:<p>
+        <p>Server SSL Profile:<p>
 
-    {% for profile_ssl_server in database_updates.profile_ssl_server %}
+        {% for profile_ssl_server in database_updates.profile_ssl_server %}
 
-        <li>{{ profile_ssl_server }}</li>
+            <li>{{ profile_ssl_server }}</li>
 
-    {% endfor %}
+        {% endfor %}
 
-    <p>Virtual servers:<p>
+        <p>Virtual servers:<p>
 
-    {% for virtual_server in database_updates.virtual_servers %}
+        {% for virtual_server in database_updates.virtual_servers %}
 
-        <li>{{ virtual_server }}</li>
+            <li>{{ virtual_server }}</li>
 
-    {% endfor %}
+        {% endfor %}
 
-{% endif %}
+    {% endif %}
+
+</div>
 
 {% endblock %}
 

@@ -9,7 +9,13 @@
 
     <style>
         p.ex1 {
-            padding-top: 30px;
+            padding-top: 7px;
+        }
+        .btn-margin-left {
+            margin-left: 10px;
+        }
+        .btn-margin-right {
+            margin-right: 10px;
         }
     </style>
 
@@ -17,10 +23,16 @@
 
 <body>
     <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'bootstrap/js/jquery.min.js' %}"></script>
+
+    <p class="ex1">
+    {% block boven %} Replace me in the other template.html files {% endblock %}
+    </p>
+
     {% include "navbar.html" %}
 
     <p class="ex1">
-    {% block content_name %} Replace me in the other template.html files {% endblock %}
+    {% block midden %} Replace me in the other template.html files {% endblock %}
     </p>
 </body>
 
