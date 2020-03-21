@@ -6,38 +6,38 @@
 
 {% block midden %}
 
-<div class="container-fullwidth">
-
     {% if bigip_node_list %}
 
-    <form action="{% url 'database:database' %}" method="POST">
+    <div class="container-fullwidth">
 
-        {% csrf_token %}
+        <form action="{% url 'database:database' %}" method="POST">
 
-        <nav class="navbar navbar-expand-lg bg-primary">
-          <div class="container-fluid">
-            <ul class="nav navbar-nav">
-              <li>
-                  <select name="bigip_ip">
+            {% csrf_token %}
 
-                    {% for node in bigip_node_list %}
+            <nav class="navbar navbar-expand-lg bg-primary">
+              <div class="container-fluid">
+                <ul class="nav navbar-nav">
+                  <li>
+                      <select name="bigip_ip">
 
-                    <option value="{{node.bigip_ip}}">{{node.bigip_name}}</option>
+                        {% for node in bigip_node_list %}
 
-                    {% endfor %}
+                        <option value="{{node.bigip_ip}}">{{node.bigip_name}}</option>
 
-                  </select>
-              </li>
-              <li><button type="submit" name="update_db" value="Database bijwerken van het geselecteerde cluster"
-                class="btn btn-light btn-margin-left btn-sm">Database bijwerken van het geselecteerde cluster</button>
-              </li>
-            </ul>
-          </div>
-        </nav>
-    </form>
-</div>
+                        {% endfor %}
 
-<div class="container-fluid">
+                      </select>
+                  </li>
+                  <li><button type="submit" name="update_db" value="Database bijwerken van het geselecteerde cluster"
+                    class="btn btn-light btn-margin-left btn-sm">Database bijwerken van het geselecteerde cluster</button>
+                  </li>
+                </ul>
+              </div>
+            </nav>
+        </form>
+    </div>
+
+    <div class="container-fluid">
 
         <table class="table table-hover">
             <thead>
@@ -57,64 +57,129 @@
             </tbody>
 
         </table></p>
-</div>
 
     {% elif database_updates %}
 
-        Deze database tabellen zijn bijgewerkt:<p>
+    <div class="container-fluid">
 
-        <p>Irules:<p>
+        <h4> Deze database tabellen zijn bijgewerkt:</h4>
 
-        {% for irule in database_updates.irules %}
+        <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Irules:</th>
+              </tr>
+            </thead>
+            <tbody>
 
-            <li>{{ irule }}</li>
+                {% for irule in database_updates.irules %}
 
-        {% endfor %}
+                    <tr>
+                        <td>{{ irule }}</td>
+                    </tr>
 
-        <p>Datagroups:<p>
+                {% endfor %}
 
-        {% for datagroup in database_updates.datagroups %}
+            </tbody>
+        </table>
 
-            <li>{{ datagroup }}</li>
+        <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Datagroups:</th>
+              </tr>
+            </thead>
+            <tbody>
 
-        {% endfor %}
+                {% for datagroup in database_updates.datagroups %}
 
+                    <tr>
+                        <td>{{ datagroup }}</td>
+                    </tr>
 
-        <p>Certificaten:<p>
+                {% endfor %}
 
-        {% for certificate in database_updates.certificates %}
+            </tbody>
+        </table>
 
-            <li>{{ certificate }}</li>
+        <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Certificaten:</th>
+              </tr>
+            </thead>
+            <tbody>
 
-        {% endfor %}
+                {% for certificate in database_updates.certificates %}
 
-        <p>Client SSL Profile:<p>
+                    <tr>
+                        <td>{{ certificate }}</td>
+                    </tr>
 
-        {% for cssl_profile in database_updates.profile_cssl %}
+                {% endfor %}
 
-            <li>{{ cssl_profile }}</li>
+            </tbody>
+        </table>
 
-        {% endfor %}
+        <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Client SSL profielen:</th>
+              </tr>
+            </thead>
+            <tbody>
 
-        <p>Server SSL Profile:<p>
+                {% for cssl_profile in database_updates.profile_cssl %}
 
-        {% for profile_ssl_server in database_updates.profile_ssl_server %}
+                    <tr>
+                        <td>{{ cssl_profile }}</td>
+                    </tr>
 
-            <li>{{ profile_ssl_server }}</li>
+                {% endfor %}
 
-        {% endfor %}
+            </tbody>
+        </table>
 
-        <p>Virtual servers:<p>
+        <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Server SSL profielen:</th>
+              </tr>
+            </thead>
+            <tbody>
 
-        {% for virtual_server in database_updates.virtual_servers %}
+                {% for profile_ssl_server in database_updates.profile_ssl_server %}
 
-            <li>{{ virtual_server }}</li>
+                    <tr>
+                        <td>{{ profile_ssl_server }}</td>
+                    </tr>
 
-        {% endfor %}
+                {% endfor %}
+
+            </tbody>
+        </table>
+
+        <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Virtual Servers:</th>
+              </tr>
+            </thead>
+            <tbody>
+
+                {% for virtual_server in database_updates.virtual_servers %}
+
+                    <tr>
+                        <td>{{ virtual_server }}</td>
+                    </tr>
+
+                {% endfor %}
+
+            </tbody>
+        </table>
+    </div>
 
     {% endif %}
-
-</div>
 
 {% endblock %}
 
