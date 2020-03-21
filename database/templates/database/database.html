@@ -1,38 +1,63 @@
 {% extends "base.html" %}
 
-{% block content_name %}
+{% block boven %}
 
-<div class="container-fluid">
-    <h2>Databasepagina</h2>
+{% endblock %}
+
+{% block midden %}
+
+<div class="container-fullwidth">
 
     {% if bigip_node_list %}
-        <form action="{% url 'database:database' %}" method="POST">
-            {% csrf_token %}
-            <select name="bigip_ip">
 
-                {% for node in bigip_node_list %}
+    <form action="{% url 'database:database' %}" method="POST">
+
+        {% csrf_token %}
+
+        <nav class="navbar navbar-expand-lg bg-primary">
+          <div class="container-fluid">
+            <ul class="nav navbar-nav">
+              <li>
+                  <select name="bigip_ip">
+
+                    {% for node in bigip_node_list %}
 
                     <option value="{{node.bigip_ip}}">{{node.bigip_name}}</option>
 
-                {% endfor %}
-            </select>
-            <input type="submit" name="update_db" value="Update Database from F5 node">
-            </form><p>
+                    {% endfor %}
 
-        <p><table>
-            <tr>
-                <th>F5 node</th>
-                <th>Tables updated</th>
-            </tr>
+                  </select>
+              </li>
+              <li><button type="submit" name="update_db" value="Database bijwerken van het geselecteerde cluster"
+                class="btn btn-light btn-margin-left btn-sm">Database bijwerken van het geselecteerde cluster</button>
+              </li>
+            </ul>
+          </div>
+        </nav>
+    </form>
+</div>
 
+<div class="container-fluid">
+
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Cluster</th>
+                    <th>Bijgewerkt op</th>
+                </tr>
+            </thead>
+
+            <tbody>
             {% for bigip_node in database %}
                 <tr>
                     <td>{{ bigip_node.bigip_name }}</td>
                     <td>{{ bigip_node.created_on }}</td>
                 </tr>
             {% endfor %}
+            </tbody>
 
         </table></p>
+</div>
 
     {% elif database_updates %}
 

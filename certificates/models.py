@@ -23,6 +23,8 @@ class CertClientSSLVirtualServer(models.Model):
 
 class CertServerSSLVirtualServer(models.Model):
     cert_name  = models.CharField(max_length=200)
+    cert_common_name = models.CharField(max_length=200)
+    cert_san = models.TextField()
     cert_partition = models.CharField(max_length=200)
     cert_expiration = models.DateTimeField()
     cert_cluster = models.CharField(max_length=200)
@@ -40,6 +42,8 @@ class CertServerSSLVirtualServer(models.Model):
 
 class CertServerSSLVirtualServerViaIruleAndDatagroup(models.Model):
     cert_name = models.CharField(max_length=200)
+    cert_common_name = models.CharField(max_length=200)
+    cert_san = models.TextField()
     cert_partition = models.CharField(max_length=200)
     cert_expiration = models.DateTimeField()
     cert_cluster = models.CharField(max_length=200)
