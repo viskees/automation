@@ -1,92 +1,185 @@
 {% extends "base.html" %}
 
-{% block content_name %}
+{% block boven %}
 
-<h2>Database Page</h2>
+{% endblock %}
 
-{% if bigip_node_list %}
-    <form action="{% url 'database:database' %}" method="POST">
-        {% csrf_token %}
-        <select name="bigip_ip">
+{% block midden %}
 
-            {% for node in bigip_node_list %}
+    {% if bigip_node_list %}
 
-                <option value="{{node.bigip_ip}}">{{node.bigip_name}}</option>
+    <div class="container-fullwidth">
 
+        <form action="{% url 'database:database' %}" method="POST">
+
+            {% csrf_token %}
+
+            <nav class="navbar navbar-expand-lg bg-primary">
+              <div class="container-fluid">
+                <ul class="nav navbar-nav">
+                  <li>
+                      <select name="bigip_ip">
+
+                        {% for node in bigip_node_list %}
+
+                        <option value="{{node.bigip_ip}}">{{node.bigip_name}}</option>
+
+                        {% endfor %}
+
+                      </select>
+                  </li>
+                  <li><button type="submit" name="update_db" value="Database bijwerken van het geselecteerde cluster"
+                    class="btn btn-light btn-margin-left btn-sm">Database bijwerken van het geselecteerde cluster</button>
+                  </li>
+                </ul>
+              </div>
+            </nav>
+        </form>
+    </div>
+
+    <div class="container-fluid">
+
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Cluster</th>
+                    <th>Bijgewerkt op</th>
+                </tr>
+            </thead>
+
+            <tbody>
+            {% for bigip_node in database %}
+                <tr>
+                    <td>{{ bigip_node.bigip_name }}</td>
+                    <td>{{ bigip_node.created_on }}</td>
+                </tr>
             {% endfor %}
-        </select>
-        <input type="submit" name="update_db" value="Update Database from F5 node">
-        </form><p>
+            </tbody>
 
-    <p><table>
-        <tr>
-            <th>F5 node</th>
-            <th>Tables updated</th>
-        </tr>
+        </table></p>
 
-        {% for bigip_node in database %}
-            <tr>
-                <td>{{ bigip_node.bigip_name }}</td>
-                <td>{{ bigip_node.created_on }}</td>
-            </tr>
-        {% endfor %}
+    {% elif database_updates %}
 
-    </table></p>
+    <div class="container-fluid">
 
-{% elif database_updates %}
+        <h4> Deze database tabellen zijn bijgewerkt:</h4>
 
-    Deze database tabellen zijn bijgewerkt:<p>
+        <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Irules:</th>
+              </tr>
+            </thead>
+            <tbody>
 
-    <p>Irules:<p>
+                {% for irule in database_updates.irules %}
 
-    {% for irule in database_updates.irules %}
+                    <tr>
+                        <td>{{ irule }}</td>
+                    </tr>
 
-        <li>{{ irule }}</li>
+                {% endfor %}
 
-    {% endfor %}
+            </tbody>
+        </table>
 
-    <p>Datagroups:<p>
+        <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Datagroups:</th>
+              </tr>
+            </thead>
+            <tbody>
 
-    {% for datagroup in database_updates.datagroups %}
+                {% for datagroup in database_updates.datagroups %}
 
-        <li>{{ datagroup }}</li>
+                    <tr>
+                        <td>{{ datagroup }}</td>
+                    </tr>
 
-    {% endfor %}
+                {% endfor %}
 
+            </tbody>
+        </table>
 
-    <p>Certificaten:<p>
+        <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Certificaten:</th>
+              </tr>
+            </thead>
+            <tbody>
 
-    {% for certificate in database_updates.certificates %}
+                {% for certificate in database_updates.certificates %}
 
-        <li>{{ certificate }}</li>
+                    <tr>
+                        <td>{{ certificate }}</td>
+                    </tr>
 
-    {% endfor %}
+                {% endfor %}
 
-    <p>Client SSL Profile:<p>
+            </tbody>
+        </table>
 
-    {% for cssl_profile in database_updates.profile_cssl %}
+        <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Client SSL profielen:</th>
+              </tr>
+            </thead>
+            <tbody>
 
-        <li>{{ cssl_profile }}</li>
+                {% for cssl_profile in database_updates.profile_cssl %}
 
-    {% endfor %}
+                    <tr>
+                        <td>{{ cssl_profile }}</td>
+                    </tr>
 
-    <p>Server SSL Profile:<p>
+                {% endfor %}
 
-    {% for profile_ssl_server in database_updates.profile_ssl_server %}
+            </tbody>
+        </table>
 
-        <li>{{ profile_ssl_server }}</li>
+        <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Server SSL profielen:</th>
+              </tr>
+            </thead>
+            <tbody>
 
-    {% endfor %}
+                {% for profile_ssl_server in database_updates.profile_ssl_server %}
 
-    <p>Virtual servers:<p>
+                    <tr>
+                        <td>{{ profile_ssl_server }}</td>
+                    </tr>
 
-    {% for virtual_server in database_updates.virtual_servers %}
+                {% endfor %}
 
-        <li>{{ virtual_server }}</li>
+            </tbody>
+        </table>
 
-    {% endfor %}
+        <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Virtual Servers:</th>
+              </tr>
+            </thead>
+            <tbody>
 
-{% endif %}
+                {% for virtual_server in database_updates.virtual_servers %}
+
+                    <tr>
+                        <td>{{ virtual_server }}</td>
+                    </tr>
+
+                {% endfor %}
+
+            </tbody>
+        </table>
+    </div>
+
+    {% endif %}
 
 {% endblock %}
 

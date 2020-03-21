@@ -41,6 +41,8 @@ def certificates(request):
             # zowel de vitual server als de client ssl profielen kunnen vaker zijn toegepast per certificaat.
             #
             # cert_name = cert_from_db_app.full_name
+            # cert_common_name = cert_from_db_app.commonname
+            # cert_san = cert_from_db_app.subjectAlternativeName
             # cert_partition = cert_from_db_app.partition
             # cert_expiration = cert_from_db_app.expiration
             # cert_cluster = BigIPNodes.objects.get(pk=cert_from_db_app.bigip_name_id)
@@ -62,6 +64,8 @@ def certificates(request):
                     #print('virtual server name: ' + vs_from_db_app.full_name)
                     #voeg een nieuwe certificaatregel toe per virtual server in de CertClientSSLVirtualServer tabel
                     cert_clientssl_virtualserver = CertClientSSLVirtualServer(cert_name=cert_from_db_app.full_name,
+                                                             cert_common_name=cert_from_db_app.commonName,
+                                                             cert_san = cert_from_db_app.subjectAlternativeName,
                                                              cert_partition=cert_from_db_app.partition,
                                                              cert_expiration=cert_from_db_app.expiration,
                                                              cert_cluster=BigIPNodes.objects.get(pk=cert_from_db_app.bigip_name_id),
@@ -78,6 +82,8 @@ def certificates(request):
             # zowel de vitual server als de Server ssl profielen kunnen vaker zijn toegepast per certificaat.
             #
             # cert_name = cert_from_db_app.full_name
+            # cert_common_name = cert_from_db_app.commonname
+            # cert_san = cert_from_db_app.subjectAlternativeName
             # cert_partition = cert_from_db_app.partition
             # cert_expiration = cert_from_db_app.expiration
             # cert_cluster = BigIPNodes.objects.get(pk=cert_from_db_app.bigip_name_id)
@@ -108,6 +114,8 @@ def certificates(request):
                         # voeg een nieuwe certificaatregel toe per virtual server in de CertClientSSLVirtualServer tabel
                         cert_servertssl_virtualserver = CertServerSSLVirtualServer(
                             cert_name=cert_from_db_app.full_name,
+                            cert_common_name = cert_from_db_app.commonName,
+                            cert_san = cert_from_db_app.subjectAlternativeName,
                             cert_partition=cert_from_db_app.partition,
                             cert_expiration=cert_from_db_app.expiration,
                             cert_cluster=BigIPNodes.objects.get(pk=cert_from_db_app.bigip_name_id),
@@ -145,6 +153,8 @@ def certificates(request):
                                 # voeg een nieuwe certificaatregel toe per virtual server
                                 # in de CertServerSSLVirtualServerViaIruleAndDatagroup tabel
                                 # cert_name = cert_from_db_app.full_name,
+                                # cert_common_name = cert_from_db_app.commonname
+                                # cert_san = cert_from_db_app.subjectAlternativeName
                                 # cert_partition = cert_from_db_app.partition,
                                 # cert_expiration = cert_from_db_app.expiration,
                                 # cert_cluster = BigIPNodes.objects.get(pk=cert_from_db_app.bigip_name_id),
@@ -158,6 +168,8 @@ def certificates(request):
 
                                 cert_irule_virtualserver = CertServerSSLVirtualServerViaIruleAndDatagroup(
                                     cert_name=cert_from_db_app.full_name,
+                                    cert_common_name = cert_from_db_app.commonName,
+                                    cert_san = cert_from_db_app.subjectAlternativeName,
                                     cert_partition=cert_from_db_app.partition,
                                     cert_expiration=cert_from_db_app.expiration,
                                     cert_cluster=BigIPNodes.objects.get(pk=cert_from_db_app.bigip_name_id),
@@ -175,8 +187,7 @@ def certificates(request):
             else:
                 continue
 
-        database = Database.objects.all()
-        context = {'database': database}
+        context = {'database': Database.objects.all()}
 
     elif 'query_db_certs' in request.POST:
 

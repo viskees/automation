@@ -1,156 +1,240 @@
 {% extends "base.html" %}
 
-{% block content_name %}
+{% block boven %}
 
-<h2>Certificates Page</h2>
+{% endblock %}
+
+{% block midden %}
+<div class="container-fullwidth">
 
     <form action="{% url 'certificates:certificates' %}" method="POST">
 
         {% csrf_token %}
-        <input type="submit" name="query_db_certs" value="List certificate tables in order of expiration">
-        <input type="submit" name="update_cert_tables" value="Update certificate tables">
+
+        <nav class="navbar navbar-expand-lg bg-primary">
+          <div class="container-fluid">
+            <ul class="nav navbar-nav">
+              <li><button type="submit" name="query_db_certs" value="Certificatenoverzicht uit de database"
+                class="btn btn-light btn-margin-left btn-sm">Certificaatoverzicht uit de database</button></li>
+              <li><button type="submit" name="update_cert_tables" value="Certificaattabellen bijwerken"
+                class="btn btn-light btn-margin-left btn-sm">Certificaattabellen bijwerken</button></li>
+            </ul>
+          </div>
+        </nav>
 
     </form>
 
-{% if database %}
+    {% if database %}
 
-    <p>Certificaattabellen zijn bijgewerkt naar deze versies:</p>
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Cluster</th>
+                    <th>Bijgewerkt op</th>
+                </tr>
 
-    <p><table>
-        <tr>
-            <th>F5 node</th>
-            <th>Tables updated</th>
-        </tr>
+            <tbody>
+                {% for bigip_node in database %}
+                    <tr>
+                        <td>{{ bigip_node.bigip_name }}</td>
+                        <td>{{ bigip_node.created_on }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
 
-        {% for bigip_node in database %}
-            <tr>
-                <td>{{ bigip_node.bigip_name }}</td>
-                <td>{{ bigip_node.created_on }}</td>
-            </tr>
-        {% endfor %}
+        </table></p>
 
-    </table></p>
+    {% endif %}
 
-{% endif %}
+    {% if cert_clientssl_virtualserver %}
 
-{% if cert_clientssl_virtualserver %}
+    <nav class="navbar navbar-expand-lg bg-primary">
+          <div class="container-fluid">
+            <ul class="nav navbar-nav">
+              <li><button class="btn btn-light btn-margin-left btn-sm">
+                  <a href="#cssl">Doorzoek op basis van client SSL profielen</a></button></li>
+              <li><button class="btn btn-light btn-margin-left btn-sm">
+                  <a href="#sssl">Doorzoek op basis van server SSL profielen</a> </button></li>
+              <li><button class="btn btn-light btn-margin-left btn-sm">
+                  <a href="#sssl-via-irules">Doorzoek op basis van server SSL profielen gekoppeld via irules en data groups</a> </button></li>
+            </ul>
+          </div>
+    </nav>
 
-    <p>Certificaten op basis van Client SSL profielen:</p>
+    <div class="container-fluid">
 
-    <p><table>
+        <p><h4 id="cssl" style="padding-top: 15px;">Doorzoek de tabel van certificaten op basis van client SSL profielen:</h4></p>
+        <input class="form-control" id="cssl_input" type="text" placeholder="Search..">
 
-        <tr>
-            <th>Cert Name</th>
-            <th>Cert Partition</th>
-            <th>Cert Expiration</th>
-            <th>Cert Cluster</th>
-            <th>CSSL Profile Name</th>
-            <th>CSSL Partition</th>
-            <th>Virtual Server Name</th>
-            <th>Virtual Server Partition</th>
-            <th>Virtual Server Destination</th>
-        </tr>
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Naam</th>
+                <th>Common Name</th>
+                <th>SAN</th>
+                <th>Verloopt op</th>
+                <th>Cluster</th>
+                <th>CSSL Profiel</th>
+                <th>Virtual Server</th>
+                <th>Virtual Server IP</th>
+              </tr>
+            </thead>
 
-        {% for server_cert in cert_clientssl_virtualserver %}
+            <tbody id="cssl_table">
 
-            <tr>
-                <td>{{ server_cert.cert_name }}</td>
-                <td>{{ server_cert.cert_partition }}</td>
-                <td>{{ server_cert.cert_expiration }}</td>
-                <td>{{ server_cert.cert_cluster }}</td>
-                <td>{{ server_cert.cssl_name }}</td>
-                <td>{{ server_cert.cssl_partition}}</td>
-                <td>{{ server_cert.vs_name }}</td>
-                <td>{{ server_cert.vs_partition }}</td>
-                <td>{{ server_cert.vs_ip }}</td>
-         </tr>
-        {% endfor %}
+                {% for server_cert in cert_clientssl_virtualserver %}
 
+                <tr>
+                    <td>{{ server_cert.cert_name }}</td>
+                    <td>{{ server_cert.cert_common_name }}</td>
+                    <td>{{ server_cert.cert_san }}</td>
+                    <td>{{ server_cert.cert_expiration }}</td>
+                    <td>{{ server_cert.cert_cluster }}</td>
+                    <td>{{ server_cert.cssl_name }}</td>
+                    <td>{{ server_cert.vs_name }}</td>
+                    <td>{{ server_cert.vs_ip }}</td>
+                </tr>
 
-    </table></p></p>
+                {% endfor %}
 
-{% endif %}
+            </tbody>
 
-{% if cert_serverssl_virtualserver %}
+          </table>
 
-    <p>Certificaten op basis van Server SSL profielen:</p>
+    </div>
 
-    <p><table>
+    <script>
+            $(document).ready(function(){
+              $("#cssl_input").on("keyup", function() {
+                var value = $(this).val().toLowerCase();
+                $("#cssl_table tr").filter(function() {
+                  $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                });
+              });
+            });
+    </script>
 
-        <tr>
-            <th>Cert Name</th>
-            <th>Cert Partition</th>
-            <th>Cert Expiration</th>
-            <th>Cert Cluster</th>
-            <th>Server SSL Profile Name</th>
-            <th>Server SSL Partition</th>
-            <th>Virtual Server Name</th>
-            <th>Virtual Server Partition</th>
-            <th>Virtual Server Destination</th>
-        </tr>
+    {% endif %}
 
-        {% for client_cert in cert_serverssl_virtualserver %}
+    {% if cert_serverssl_virtualserver %}
 
-            <tr>
-                <td>{{ client_cert.cert_name }}</td>
-                <td>{{ client_cert.cert_partition }}</td>
-                <td>{{ client_cert.cert_expiration }}</td>
-                <td>{{ client_cert.cert_cluster }}</td>
-                <td>{{ client_cert.server_ssl_name }}</td>
-                <td>{{ client_cert.server_ssl_partition}}</td>
-                <td>{{ client_cert.vs_name }}</td>
-                <td>{{ client_cert.vs_partition }}</td>
-                <td>{{ client_cert.vs_ip }}</td>
-         </tr>
-        {% endfor %}
+    <div class="container-fluid">
 
+        <p><h4 id="sssl" style="padding-top: 15px;">Doorzoek de tabel van certificaten op basis van server SSL profielen:</h4></p>
+        <input class="form-control" id="sssl_input" type="text" placeholder="Search..">
 
-    </table></p>
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Naam</th>
+                    <th>Common Name</th>
+                    <th>SAN</th>
+                    <th>Verloopt op</th>
+                    <th>Cluster</th>
+                    <th>Server SSL Profiel</th>
+                    <th>Virtual Server</th>
+                    <th>Virtual Server IP</th>
+                </tr>
+            </thead>
 
-{% endif %}
+            <tbody id="sssl_table">
 
+            {% for client_cert in cert_serverssl_virtualserver %}
 
-{% if cert_serverssl_datagroup_irule_virtualserver %}
+                <tr>
+                    <td>{{ client_cert.cert_name }}</td>
+                    <td>{{ client_cert.cert_common_name }}</td>
+                    <td>{{ client_cert.cert_san }}</td>
+                    <td>{{ client_cert.cert_expiration }}</td>
+                    <td>{{ client_cert.cert_cluster }}</td>
+                    <td>{{ client_cert.server_ssl_name }}</td>
+                    <td>{{ client_cert.vs_name }}</td>
+                    <td>{{ client_cert.vs_ip }}</td>
+                </tr>
 
-    <p>Certificaten op basis van Server SSL profielen, gekoppeld via irules en datagroups:</p>
+            {% endfor %}
 
-    <p><table>
+            </tbody>
 
-        <tr>
-            <th>Cert Name</th>
-            <th>Cert Partition</th>
-            <th>Cert Expiration</th>
-            <th>Cert Cluster</th>
-            <th>Server SSL Profile Name</th>
-            <th>Server SSL Partition</th>
-            <th>Datagroup</th>
-            <th>Irule</th>
-            <th>Virtual Server Name</th>
-            <th>Virtual Server Partition</th>
-            <th>Virtual Server Destination</th>
-        </tr>
+        </table></p>
 
-        {% for client_cert_datagroup_irule in cert_serverssl_datagroup_irule_virtualserver %}
+    </div>
 
-            <tr>
-                <td>{{ client_cert_datagroup_irule.cert_name }}</td>
-                <td>{{ client_cert_datagroup_irule.cert_partition }}</td>
-                <td>{{ client_cert_datagroup_irule.cert_expiration }}</td>
-                <td>{{ client_cert_datagroup_irule.cert_cluster }}</td>
-                <td>{{ client_cert_datagroup_irule.server_ssl_name }}</td>
-                <td>{{ client_cert_datagroup_irule.server_ssl_partition}}</td>
-                <td>{{ client_cert_datagroup_irule.datagroup_name }}</td>
-                <td>{{ client_cert_datagroup_irule.irule_name }}</td>
-                <td>{{ client_cert_datagroup_irule.vs_name }}</td>
-                <td>{{ client_cert_datagroup_irule.vs_partition }}</td>
-                <td>{{ client_cert_datagroup_irule.vs_ip }}</td>
-         </tr>
-        {% endfor %}
+    <script>
+            $(document).ready(function(){
+              $("#sssl_input").on("keyup", function() {
+                var value = $(this).val().toLowerCase();
+                $("#sssl_table tr").filter(function() {
+                  $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                });
+              });
+            });
+    </script>
 
+    {% endif %}
 
-    </table></p>
+    {% if cert_serverssl_datagroup_irule_virtualserver %}
 
-{% endif %}
+    <div class="container-fluid">
+
+        <p><h4 id="sssl-via-irules" style="padding-top: 15px;">Doorzoek de tabel van certificaten op basis van server SSL profielen, gekoppeld via irules en datagroups:</h4></p>
+        <input class="form-control" id="sssl_irule_input" type="text" placeholder="Search..">
+
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Naam</th>
+                    <th>Common Name</th>
+                    <th>SAN</th>
+                    <th>Verloopt op</th>
+                    <th>Cluster</th>
+                    <th>Server SSL Profiel</th>
+                    <th>Datagroup</th>
+                    <th>Irule</th>
+                    <th>Virtual Server</th>
+                    <th>Virtual Server IP</th>
+                </tr>
+            </thead>
+
+            <tbody id="sssl_irule_table">
+
+            {% for client_cert_datagroup_irule in cert_serverssl_datagroup_irule_virtualserver %}
+
+                <tr>
+                    <td>{{ client_cert_datagroup_irule.cert_name }}</td>
+                    <td>{{ client_cert_datagroup_irule.cert_common_name }}</td>
+                    <td>{{ client_cert_datagroup_irule.cert_san }}</td>
+                    <td>{{ client_cert_datagroup_irule.cert_expiration }}</td>
+                    <td>{{ client_cert_datagroup_irule.cert_cluster }}</td>
+                    <td>{{ client_cert_datagroup_irule.server_ssl_name }}</td>
+                    <td>{{ client_cert_datagroup_irule.datagroup_name }}</td>
+                    <td>{{ client_cert_datagroup_irule.irule_name }}</td>
+                    <td>{{ client_cert_datagroup_irule.vs_name }}</td>
+                    <td>{{ client_cert_datagroup_irule.vs_ip }}</td>
+                </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table></p>
+
+    </div>
+
+    <script>
+            $(document).ready(function(){
+              $("#sssl_irule_input").on("keyup", function() {
+                var value = $(this).val().toLowerCase();
+                $("#sssl_irule_table tr").filter(function() {
+                  $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                });
+              });
+            });
+    </script>
+
+    {% endif %}
+
+</div>
 
 
 {% endblock %}

@@ -1,24 +1,49 @@
 <!doctype html>
 <html>
+
+{% load static %}
+
 <head>
+    <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
     <title>Lets Automate :)</title>
-<style>
-    table, td, th {
-    border: 1px solid black;
-    }
 
-    table {
-    border-collapse: collapse;
-    }
+    <style>
+        p.boven {
+            padding-top: 0px;
+        }
+        p.midden {
+            padding-top: 13px;
+        }
+        .container{
+        }
+        .navbar{
+        }
+        .btn-margin-left {
+            margin-left: 10px;
+        }
+        .btn-margin-right {
+            margin-right: 10px;
+        }
+    </style>
 
-    th {
-    height: 50px;
-    }
-</style>
+</head>
+
 <body>
+    <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'bootstrap/js/jquery.min.js' %}"></script>
+
     {% include "navbar.html" %}
 
-    {% block content_name %} Replace me in the other template.html files {% endblock %}
+    <p class="boven">
+    {% block boven %} Replace me in the other template.html files {% endblock %}
+    </p>
+
+    <p class="midden">
+    {% block midden %} Replace me in the other template.html files {% endblock %}
+    </p>
+
 </body>
 
 </html>
+
+<body>
