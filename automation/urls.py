@@ -22,5 +22,6 @@ urlpatterns = [
     url(r'^file_upload/', include('file_upload.urls')),
     url(r'^decommissioning/', include('decommissioning.urls')),
     url(r'^certificates/', include('certificates.urls')),
+    url(r'^virtualservers/', include('virtualservers.urls')),
     url(r'^admin/', admin.site.urls),
 ]

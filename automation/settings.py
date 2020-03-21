@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'certificates',
     'decommissioning',
     'file_upload',
+    'virtualservers',
     'bootstrap',
 ]
 

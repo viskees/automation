@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block boven %}
+
+{% endblock %}
+
+{% block midden %}
+<div class="container-fullwidth">
+
+    <form action="{% url 'virtualservers:virtualservers' %}" method="POST">
+
+        {% csrf_token %}
+
+        <nav class="navbar navbar-expand-lg bg-primary">
+          <div class="container-fluid">
+            <ul class="nav navbar-nav">
+              <li><button type="submit" name="query_db_vs" value="Virtualserveroverzicht uit de database"
+                class="btn btn-light btn-margin-left btn-sm">Virtualserveroverzicht uit de database</button></li>
+              <li><button type="submit" name="update_vs_tables" value="Virtualservertabellen bijwerken"
+                class="btn btn-light btn-margin-left btn-sm">Virtualservertabellen bijwerken</button></li>
+            </ul>
+          </div>
+        </nav>
+
+    </form>
+
+    {% if database %}
+
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Cluster</th>
+                    <th>Bijgewerkt op</th>
+                </tr>
+
+            <tbody>
+                {% for bigip_node in database %}
+                    <tr>
+                        <td>{{ bigip_node.bigip_name }}</td>
+                        <td>{{ bigip_node.created_on }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+
+        </table></p>
+
+    {% endif %}
+
+    {% if virtualservers %}
+
+    <div class="container-fluid">
+
+        <p><h4 id="vs" style="padding-top: 15px;">Doorzoek de tabel van virtual servers:</h4></p>
+        <input class="form-control" id="vs_input" type="text" placeholder="Search..">
+
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Naam</th>
+                <th>IP</th>
+                <th>Cluster</th>
+              </tr>
+            </thead>
+
+            <tbody id="vs_table">
+
+                {% for virtualserver in virtualservers %}
+
+                <tr>
+                    <td>{{ virtualserver.vs_name }}</td>
+                    <td>{{ virtualserver.vs_ip }}</td>
+                    <td>{{ virtualserver.vs_cluster }}</td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+          </table>
+
+    </div>
+
+    <script>
+            $(document).ready(function(){
+              $("#vs_input").on("keyup", function() {
+                var value = $(this).val().toLowerCase();
+                $("#vs_table tr").filter(function() {
+                  $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                });
+              });
+            });
+    </script>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}
