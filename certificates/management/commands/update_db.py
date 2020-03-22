@@ -3,6 +3,7 @@ from datetime import datetime
 import requests
 from database.models import *
 from certificates.models import *
+from virtualservers.models import *
 from django.db.models import Q
 
 class Command(BaseCommand):
@@ -63,6 +64,11 @@ class Command(BaseCommand):
 
             # data verwijderen - CertServerSSLVirtualServerViaIruleAndDatagroup tabel
             CertServerSSLVirtualServerViaIruleAndDatagroup.objects.all().delete()
+
+            ########### Database van de virtualservs app eerst opschonen
+
+            # data verwijderen - VirtualServer tabel
+            VirtualServerCluster.objects.all().delete()
 
             # nieuwe database entries opnemen in een dictionary voor weergave op de database.html pagina
             database_updates = {}
@@ -604,6 +610,9 @@ class Command(BaseCommand):
                             else:
                                 continue
 
+            # verzameltabellen van de verschillende app's vullen
+            # certificates app
+
             for cert_from_db_app in Certificates.objects.all():
 
                 # print('cert name: ' + cert_from_db_app.full_name)
@@ -753,6 +762,25 @@ class Command(BaseCommand):
 
                 else:
                     continue
+
+            # verzameltabellen van de verschillende app's vullen
+            # virtualservers app
+
+            # virtualserver tabel doorlopen uit de DB app en de virtualserverclustertabel vullen
+            for vs_from_db_app in VirtualServer.objects.all():
+
+                # verzameltabel virtualserverclustertabel opbouwen.
+                #
+                # vs_name = vs_from_db_app.full_name
+                # vs_ip = vs_from_db_app.destination
+                # vs_cluster = BigIPNodes.objects.get(pk=vs_from_db_app.bigip_name_id)
+
+                virtualserver_cluster = VirtualServerCluster(vs_name = vs_from_db_app.full_name,
+                                                             vs_ip = vs_from_db_app.destination,
+                                                             vs_cluster = BigIPNodes.objects.get(pk=vs_from_db_app.bigip_name_id))
+
+                virtualserver_cluster.save()
+
 
             # database tabel bijwerken zodat het duidelijk is van welke datum de huidige configuratie is
 
