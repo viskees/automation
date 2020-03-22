@@ -1,9 +1,35 @@
 {% extends "base.html" %}
 
-{% block midden %}
+{% block boven %}
 
-<div class="container-fluid">
-    <h2>Decommissioning Page</h2>
-</div>
+{% endblock%}
+
+{% block midden %}
+    <div class="container-fluid">
+
+        <form action="{% url 'decommissioning:decommissioning' %}" method="POST">
+
+            {% csrf_token %}
+
+            <h4 style="padding-top: 15px;">Geef in het veld hieronder het IP adres van de virtual server, of node, waarvoor je de
+            configuratie afhankelijkheden wil weergeven:</h4>
+
+            <input type="text" name="ip_adres" value="ip adres">
+            Het opgeven IP betreft een:
+
+            <select name="vs_or_node">
+                <option value="vs">virtual server</option>
+                <option value="node">node</option>
+            </select>
+
+            <input type="submit" name="vs_or_node_submit" value="Haal de configuratie op uit de database">
+        </form><p>
+
+        {% if validation_error %}
+
+            <h3>Geef een geldig IPv4 adres in decimal dotted formaat.</h3>
+
+        {% endif%}
+    </div>
 
 {% endblock %}
