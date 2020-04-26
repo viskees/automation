@@ -105,6 +105,34 @@ class Irule(models.Model):
     def __str__(self):
         return self.full_name
 
+class Node(models.Model):
+    bigip_name = models.ForeignKey(BigIPNodes, on_delete=models.CASCADE)
+    full_name = models.CharField(max_length=200)
+    partition = models.CharField(max_length=200)
+    address = models.CharField(max_length=200)
+    monitor = models.CharField(max_length=200)
+
+    class Meta:
+        ordering = ['bigip_name']
+
+    def __str__(self):
+        return self.full_name
+
+class Pool(models.Model):
+    bigip_name = models.ForeignKey(BigIPNodes, on_delete=models.CASCADE)
+    full_name = models.CharField(max_length=200)
+    description = models.CharField(max_length=200)
+    partition = models.CharField(max_length=200)
+    monitors = models.TextField()
+    members = models.ManyToManyField(Node)
+
+    class Meta:
+        ordering = ['bigip_name']
+
+    def __str__(self):
+        return self.full_name
+
+
 
 class VirtualServer(models.Model):
     bigip_name = models.ForeignKey(BigIPNodes, on_delete=models.CASCADE)
