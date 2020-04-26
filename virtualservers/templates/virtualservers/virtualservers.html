@@ -59,6 +59,7 @@
                 <th>Naam</th>
                 <th>IP</th>
                 <th>Cluster</th>
+                <th>Irule</th>
               </tr>
             </thead>
 
@@ -70,6 +71,7 @@
                     <td>{{ virtualserver.vs_name }}</td>
                     <td>{{ virtualserver.vs_ip }}</td>
                     <td>{{ virtualserver.vs_cluster }}</td>
+                    <td>{{ virtualserver.vs_irule }}</td>
                 </tr>
 
                 {% endfor %}

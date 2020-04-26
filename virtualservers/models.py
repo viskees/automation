@@ -1,9 +1,10 @@
 from django.db import models
 
-class VirtualServerCluster(models.Model):
+class VirtualServerVerzamel(models.Model):
     vs_name  = models.CharField(max_length=200)
     vs_ip = models.CharField(max_length=200)
     vs_cluster = models.CharField(max_length=200)
+    vs_irule = models.CharField(max_length=200)
 
     class Meta:
         ordering = ['vs_cluster']

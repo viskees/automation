@@ -18,7 +18,7 @@ def virtualservers(request):
         # Daarom worden alle configuratietabellen die horen bij het betreffende F5 cluster opnieuw opgebouwd.
 
         # data verwijderen - VirtualServer tabel
-        VirtualServerCluster.objects.all().delete()
+        VirtualServerVerzamel.objects.all().delete()
 
         # virtualserver tabel doorlopen uit de DB app en de virtualserverclustertabel vullen
         for vs_from_db_app in VirtualServer.objects.all():
@@ -28,17 +28,19 @@ def virtualservers(request):
             # vs_name = vs_from_db_app.full_name
             # vs_ip = vs_from_db_app.destination
             # vs_cluster = BigIPNodes.objects.get(pk=vs_from_db_app.bigip_name_id)
+            # vs_irule = [irule.full_name for irule in vs_from_db_app.irule.all()]
 
-            virtualserver_cluster = VirtualServerCluster(vs_name = vs_from_db_app.full_name,
-                                                         vs_ip = vs_from_db_app.destination,
-                                                         vs_cluster = BigIPNodes.objects.get(pk=vs_from_db_app.bigip_name_id))
+            virtualserver_verzamel = VirtualServerVerzamel(vs_name = vs_from_db_app.full_name,
+                                                        vs_ip = vs_from_db_app.destination,
+                                                        vs_cluster = BigIPNodes.objects.get(pk=vs_from_db_app.bigip_name_id),
+                                                        vs_irule = ", ".join([irule.full_name for irule in vs_from_db_app.irule.all()]))
 
-            virtualserver_cluster.save()
+            virtualserver_verzamel.save()
 
         context = {'database': Database.objects.all()}
 
     elif 'query_db_vs' in request.POST:
 
-        context = {"virtualservers": VirtualServerCluster.objects.all()}
+        context = {"virtualservers": VirtualServerVerzamel.objects.all()}
 
     return render(request, 'virtualservers/virtualservers.html', context)

@@ -5,12 +5,34 @@
 {% endblock%}
 
 {% block midden %}
+
+    <form action="{% url 'decommissioning:decommissioning' %}" method="POST">
+
+        {% csrf_token %}
+
+        <nav class="navbar navbar-expand-lg bg-primary">
+          <div class="container-fluid">
+            <ul class="nav navbar-nav">
+              <li><button type="submit" name="query_db_irule" value="Niet toegekende Irules"
+                class="btn btn-light btn-margin-left btn-sm">Niet toegekende Irules</button></li>
+              <li><button type="submit" name="search_by_ip" value="Zoeken op IP"
+                class="btn btn-light btn-margin-left btn-sm">Zoeken op basis van IP adres</button></li>
+            </ul>
+          </div>
+        </nav>
+
+    </form>
+
+
+    {% if search_by_ip %}
+
     <div class="container-fluid">
 
         <form action="{% url 'decommissioning:decommissioning' %}" method="POST">
 
             {% csrf_token %}
 
+            <h4 style="padding-top: 15px;">Deze functionaliteit is nog niet klaar voor gebruik </h4>
             <h4 style="padding-top: 15px;">Geef in het veld hieronder het IP adres van de virtual server, of node, waarvoor je de
             configuratie afhankelijkheden wil weergeven:</h4>
 
@@ -25,11 +47,63 @@
             <input type="submit" name="vs_or_node_submit" value="Haal de configuratie op uit de database">
         </form><p>
 
-        {% if validation_error %}
-
-            <h3>Geef een geldig IPv4 adres in decimal dotted formaat.</h3>
-
-        {% endif%}
     </div>
+
+    {% endif %}
+
+    {% if validation_error %}
+
+    <div class="container-fluid">
+
+        <h3>Geef een geldig IPv4 adres in decimal dotted formaat.</h3>
+
+    </div>
+
+    {% endif %}
+
+    {% if irules_niet_toegekend %}
+
+    <div class="container-fluid">
+
+        <p><h4 id="vs" style="padding-top: 15px;">Doorzoek de iruletabel:</h4></p>
+        <input class="form-control" id="irule_input" type="text" placeholder="Search..">
+
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Irule</th>
+                <th>Cluster</th>
+                </tr>
+            </thead>
+
+            <tbody id="irule_table">
+
+                {% for irule in irules_niet_toegekend %}
+
+                <tr>
+                    <td>{{ irule.full_name }}</td>
+                    <td>{{ irule.cluster }}</td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+          </table>
+
+    </div>
+
+    <script>
+            $(document).ready(function(){
+              $("#irule_input").on("keyup", function() {
+                var value = $(this).val().toLowerCase();
+                $("#irule_table tr").filter(function() {
+                  $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                });
+              });
+            });
+    </script>
+
+    {% endif %}
 
 {% endblock %}
