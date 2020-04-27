@@ -13,15 +13,39 @@
         <nav class="navbar navbar-expand-lg bg-primary">
           <div class="container-fluid">
             <ul class="nav navbar-nav">
-              <li><button type="submit" name="query_db_irule" value="Niet toegekende Irules"
+                <li><button type="submit" name="query_db_irule" value="Niet toegekende Irules"
                 class="btn btn-light btn-margin-left btn-sm">Niet toegekende Irules</button></li>
-              <li><button type="submit" name="search_by_ip" value="Zoeken op IP"
+                <li><button type="submit" name="search_by_ip" value="Zoeken op IP"
                 class="btn btn-light btn-margin-left btn-sm">Zoeken op basis van IP adres</button></li>
+                <li><button type="submit" name="update_decom_tables" value="decomtabellen bijwerken"
+                class="btn btn-light btn-margin-left btn-sm">Decomtabellen bijwerken</button></li>
             </ul>
           </div>
         </nav>
 
     </form>
+
+    {% if database %}
+
+     <table class="table table-hover">
+         <thead>
+             <tr>
+                 <th>Cluster</th>
+                 <th>Bijgewerkt op</th>
+             </tr>
+
+         <tbody>
+             {% for bigip_node in database %}
+                 <tr>
+                     <td>{{ bigip_node.bigip_name }}</td>
+                     <td>{{ bigip_node.created_on }}</td>
+                 </tr>
+             {% endfor %}
+         </tbody>
+
+     </table></p>
+
+    {% endif %}
 
 
     {% if search_by_ip %}
@@ -81,8 +105,8 @@
                 {% for irule in irules_niet_toegekend %}
 
                 <tr>
-                    <td>{{ irule.full_name }}</td>
-                    <td>{{ irule.cluster }}</td>
+                    <td>{{ irule.irule_name }}</td>
+                    <td>{{ irule.irule_cluster }}</td>
                 </tr>
 
                 {% endfor %}

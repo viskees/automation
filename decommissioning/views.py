@@ -7,6 +7,7 @@ from django.core.validators import validate_ipv4_address
 from django.core.exceptions import ValidationError
 
 from database.models import *
+from .models import *
 
 # Create your views here.
 
@@ -16,7 +17,39 @@ def decommissioning(request):
 
     context = {}
 
-    if 'search_by_ip' in request.POST:
+    if 'update_decom_tables' in request.POST:
+
+        # IrulesNotAssigned table
+        # irule_name =
+        # irule_cluster =
+
+
+        # Deze query geeft de virtualservers waaraan een irule gekoppeld is
+        vs_met_irule = VirtualServer.objects.filter(irule__isnull=False)
+
+        # maak een lijst met irule pk ID's en pas deze toe op een irule queryset
+        irules_assigned = []
+
+        for vs in vs_met_irule:
+            for irule in vs.irule.all():
+                # print("virtual server: " + vs.full_name + "irule ID: " + str(irule.id))
+                irules_assigned.append(irule.id)
+
+        # Deze query geeft de irules die niet zijn toegekend aan virtual servers
+        # Irule.objects.exclude(id__in=irules_assigned)
+
+        for irule in Irule.objects.exclude(id__in=irules_assigned):
+
+            irule_not_assigned = IrulesNotAssigned(irule_name = irule.full_name,
+                                                   irule_cluster = BigIPNodes.objects.get(pk=irule.bigip_name_id)
+            )
+
+            irule_not_assigned.save()
+
+        context = {'database': Database.objects.all()}
+
+
+    elif 'search_by_ip' in request.POST:
 
         context = {"search_by_ip": "search_by_ip" }
 
@@ -38,16 +71,6 @@ def decommissioning(request):
 
     elif 'query_db_irule' in request.POST:
 
-        #Deze query geeft de irules weer die niet zijn toegekend aan virtual servers
-
-        vs_met_irule = VirtualServer.objects.filter(irule__isnull=False)
-
-        #maak een lijst met irule pk ID's en pas deze toe op een irule queryset
-
-        for vs in vs_met_irule:
-            for irule in vs.irule.all():
-                print("virtual server: " + vs.full_name + "irule ID: " + str(irule.id))
-
-        context = {"irules_niet_toegekend": Irule.objects.all()}
+        context = {"irules_niet_toegekend": IrulesNotAssigned.objects.all()}
 
     return render(request, 'decommissioning/decommissioning.html', context)
